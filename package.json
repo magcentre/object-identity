@@ -1,0 +1,29 @@
+{
+  "name": "identity-service",
+  "version": "1.0.0",
+  "description": "This Micro-service will be responsible to provide all account and role based functionalities",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@magcentre/init": "^1.0.1",
+    "@magcentre/logger-helper": "^1.0.0",
+    "@magcentre/mongoose-helper": "^1.0.0",
+    "@magcentre/response-helper": "^1.0.0",
+    "bcryptjs": "^2.4.3",
+    "express": "^4.12.3",
+    "jsonwebtoken": "^8.5.1",
+    "moment": "^2.29.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.4.1",
+    "eslint-config-airbnb": "^19.0.2",
+    "eslint-plugin-import": "^2.25.3",
+    "eslint-plugin-jsx-a11y": "^6.5.1",
+    "eslint-plugin-react": "^7.27.1",
+    "eslint-plugin-react-hooks": "^4.3.0"
+  },
+  "author": "Magcentre",
+  "license": "Apache-2.0"
+}
