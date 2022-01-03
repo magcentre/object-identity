@@ -1,0 +1,390 @@
+swagger: "2.0"
+info:
+  version: "0.0.1"
+  title: Identity Service
+  description: The micro-service intended to provide the user role and access management
+  contact:
+    email: prasanna@makonlinesolutions.com
+host: localhost:5004
+basePath: /
+securityDefinitions:
+  jwt:
+    type: apiKey
+    name: Authorization
+    in: header
+tags:
+  - name: "user"
+    description: "Everything about user, authetication and role management"
+schemes:
+  - http
+  - https
+consumes:
+  - application/json
+produces:
+  - application/json
+paths:
+  /user/create:
+    x-swagger-router-controller: user.controller
+    post:
+      tags:
+        - "user"
+      summary: Create a new user account
+      description: Create a new user account
+      operationId: create
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: User body object
+          description: User creation body object
+          schema:
+            type: object
+            required:
+              - firstName
+              - lastName
+              - email
+              - password
+            properties:
+              firstName:
+                type: string
+              lastName:
+                type: string
+              email:
+                type: string
+              password:
+                type: string
+      responses:
+        "200":
+          description: Success
+          schema:
+            properties:
+              _id:
+                type: string
+                description: "Mongo Object Id ( user id )"
+              firstName:
+                description: "Registered users first name"
+                type: string
+              lastName:
+                description: "Registered user last name"
+                type: string
+              email:
+                type: string
+                description: "Registered users email address"
+              password:
+                type: string
+                description: "Hash of password provided during the registration"
+        "400":
+          description: Bad Request entry, in case validation failed or missing of required parameters
+          schema:
+            properties:
+              statusCode:
+                type: integer
+                description: "statusCode for response to the request"
+              title:
+                type: string
+                description: "HTTP status code title for the response"
+              message:
+                type: string
+                description: "Short message about the error or missing information in request"
+              info:
+                type: object
+                description: "Error object"
+        "500":
+          description: Internal server error
+          schema:
+            properties:
+              statusCode:
+                type: integer
+                description: "statusCode for response to the request"
+              title:
+                type: string
+                description: "HTTP status code title for the response"
+              message:
+                type: string
+                description: "Short message about the error or missing information in request"
+        default:
+          description: Error
+          schema:
+            properties:
+              statusCode:
+                type: integer
+                description: "statusCode for response to the request"
+              title:
+                type: string
+                description: "HTTP status code title for the response"
+              message:
+                type: string
+                description: "Short message about the error or missing information in request"
+  /user/authenticate:
+    x-swagger-router-controller: user.controller
+    post:
+      summary: Authenticate Registered user
+      tags:
+        - "user"
+      description: Authenticate Registered user
+      operationId: authenticate
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: login body object
+          description: username password to perform authentication
+          schema:
+            type: object
+            required:
+              - email
+              - password
+            properties:
+              email:
+                type: string
+              password:
+                type: string
+      responses:
+        "200":
+          description: Success
+          schema:
+            properties:
+              _id:
+                type: string
+                description: "Mongo Object Id ( user id )"
+              firstName:
+                description: "Registered users first name"
+                type: string
+              lastName:
+                description: "Registered user last name"
+                type: string
+              email:
+                type: string
+                description: "Registered users email address"
+              role:
+                type: string
+                description: "Access role assigned to the authenticated user"
+              createdAt:
+                type: string
+                description: "Timestamp when the user object is created"
+              updatedAt:
+                type: string
+                description: "Timestamp when the user object is modified"
+              access:
+                type: object
+                description: Contains token and expiry timestamp for access token
+              refresh:
+                type: object
+                description: Contains token and expiry timestamp for refresh token
+        "400":
+          description: Bad Request entry, in case validation failed or missing of required parameters
+          schema:
+            properties:
+              statusCode:
+                type: integer
+                description: "statusCode for response to the request"
+              title:
+                type: string
+                description: "HTTP status code title for the response"
+              message:
+                type: string
+                description: "Short message about the error or missing information in request"
+              info:
+                type: object
+                description: "Error object"
+        "500":
+          description: Internal server error
+          schema:
+            properties:
+              statusCode:
+                type: integer
+                description: "statusCode for response to the request"
+              title:
+                type: string
+                description: "HTTP status code title for the response"
+              message:
+                type: string
+                description: "Short message about the error or missing information in request"
+        default:
+          description: Error
+          schema:
+            properties:
+              statusCode:
+                type: integer
+                description: statusCode for response to the request
+              title:
+                type: string
+                description: HTTP status code title for the response
+              message:
+                type: string
+                description: Short message about the error or missing information in request
+  /user/refresh-token:
+    x-swagger-router-controller: user.controller
+    post:
+      summary: Generate new access token based on the refresh token generated during authentication process
+      tags:
+        - "user"
+      description: Generate new access tokens based on refresh token
+      operationId: getAccessToken
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: Refresh token to generate new access token
+          description: Refresh token to generate new access token
+          schema:
+            type: object
+            required:
+              - refresh
+            properties:
+              refresh:
+                type: string
+      responses:
+        "200":
+          description: Success
+          schema:
+            properties:
+              _id:
+                type: string
+                description: "Mongo Object Id ( user id )"
+              firstName:
+                description: "Registered users first name"
+                type: string
+              lastName:
+                description: "Registered user last name"
+                type: string
+              email:
+                type: string
+                description: "Registered users email address"
+              role:
+                type: string
+                description: "Access role assigned to the authenticated user"
+              createdAt:
+                type: string
+                description: "Timestamp when the user object is created"
+              updatedAt:
+                type: string
+                description: "Timestamp when the user object is modified"
+        "400":
+          description: Bad Request entry, in case validation failed or missing of required parameters
+          schema:
+            properties:
+              statusCode:
+                type: integer
+                description: "statusCode for response to the request"
+              title:
+                type: string
+                description: "HTTP status code title for the response"
+              message:
+                type: string
+                description: "Short message about the error or missing information in request"
+              info:
+                type: object
+                description: "Error object"
+        "500":
+          description: Internal server error
+          schema:
+            properties:
+              statusCode:
+                type: integer
+                description: "statusCode for response to the request"
+              title:
+                type: string
+                description: "HTTP status code title for the response"
+              message:
+                type: string
+                description: "Short message about the error or missing information in request"
+        default:
+          description: Error
+          schema:
+            properties:
+              statusCode:
+                type: integer
+                description: statusCode for response to the request
+              title:
+                type: string
+                description: HTTP status code title for the response
+              message:
+                type: string
+                description: Short message about the error or missing information in request
+  /user/profile:
+    x-swagger-router-controller: user.controller
+    get:
+      tags:
+        - "user"
+      security:
+        - jwt: []
+      summary: Get profile of authenticated user
+      description: Get profile of authenticated user
+      operationId: getProfile
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: Load logged in users profile
+          schema:
+            properties:
+              _id:
+                type: string
+                description: "Mongo Object Id ( user id )"
+              firstName:
+                description: "Registered users first name"
+                type: string
+              lastName:
+                description: "Registered user last name"
+                type: string
+              email:
+                type: string
+                description: "Registered users email address"
+              role:
+                type: string
+                description: "Access role assigned to the authenticated user"
+              createdAt:
+                type: string
+                description: "Timestamp when the user object is created"
+              updatedAt:
+                type: string
+                description: "Timestamp when the user object is modified"
+              access:
+                type: object
+                description: Contains token and expiry timestamp for access token
+              refresh:
+                type: object
+                description: Contains token and expiry timestamp for refresh token
+        "403":
+          description: Unauthorized access, either token is not provided or expired
+          schema:
+            properties:
+              message:
+                type: string
+              code:
+                type: string
+              statusCode:
+                type: integer
+        "500":
+          description: Internal server error
+          schema:
+            properties:
+              statusCode:
+                type: integer
+                description: "statusCode for response to the request"
+              title:
+                type: string
+                description: "HTTP status code title for the response"
+              message:
+                type: string
+                description: "Short message about the error or missing information in request"
+        default:
+          description: Error
+          schema:
+            properties:
+              statusCode:
+                type: integer
+                description: statusCode for response to the request
+              title:
+                type: string
+                description: HTTP status code title for the response
+              message:
+                type: string
+                description: Short message about the error or missing information in request
