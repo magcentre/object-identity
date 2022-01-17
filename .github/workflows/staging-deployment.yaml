@@ -43,4 +43,4 @@ jobs:
             sudo /usr/bin/docker rm object-identity
             sudo /usr/bin/docker rmi magcentre/object-identity .
             sudo /usr/bin/docker build -t magcentre/object-identity  .
-            sudo /usr/bin/docker run --network=magcentre-network --name=object-identity -p 5000:5000 -d magcentre/object-identity 
+            sudo /usr/bin/docker run --network=magcentre-network --name=object-identity -d magcentre/object-identity 
