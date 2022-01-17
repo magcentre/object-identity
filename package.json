@@ -8,9 +8,9 @@
   },
   "dependencies": {
     "@magcentre/init": "^1.0.1",
-    "@magcentre/logger-helper": "^1.0.0",
+    "@magcentre/logger-helper": "^1.0.1",
     "@magcentre/mongoose-helper": "^1.0.0",
-    "@magcentre/response-helper": "^1.0.0",
+    "@magcentre/response-helper": "^1.0.1",
     "bcryptjs": "^2.4.3",
     "express": "^4.12.3",
     "jsonwebtoken": "^8.5.1",

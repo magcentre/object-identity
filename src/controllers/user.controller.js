@@ -1,5 +1,7 @@
 const { sendResult, sendError } = require('@magcentre/response-helper');
 
+const logger = require('@magcentre/logger-helper');
+
 const processor = require('../processors/user.processor');
 
 const create = (req, res) => {
@@ -12,7 +14,10 @@ const create = (req, res) => {
       return processor.createUser(userBody);
     })
     .then((e) => sendResult(e, 200, res, req))
-    .catch((e) => sendError(e, res, e.statusCode || 500, req));
+    .catch((e) => {
+      logger.error(e);
+      sendError(e, res, e.statusCode || 500, req);
+    });
 };
 
 const authenticate = (req, res) => {
@@ -28,7 +33,10 @@ const authenticate = (req, res) => {
       throw new Error({ statusCode: 400, message: 'Incorrect email or password' });
     })
     .then((e) => sendResult(e, 200, res, req))
-    .catch((e) => sendError(e, res, e.statusCode || 500, req));
+    .catch((e) => {
+      logger.error(e);
+      sendError(e, res, e.statusCode || 500, req);
+    });
 };
 
 const getProfile = (req, res) => {
@@ -36,7 +44,10 @@ const getProfile = (req, res) => {
 
   processor.getUserById(userId)
     .then((e) => sendResult(e, 200, res, req))
-    .catch((e) => sendError(e, res, e.statusCode || 500, req));
+    .catch((e) => {
+      logger.error(e);
+      sendError(e, res, e.statusCode || 500, req);
+    });
 };
 
 const getAccessToken = (req, res) => {
@@ -52,7 +63,10 @@ const getAccessToken = (req, res) => {
       });
     })
     .then((e) => sendResult(e, 200, res, req))
-    .catch((e) => sendError(e, res, e.statusCode || 500, req));
+    .catch((e) => {
+      logger.error(e);
+      sendError(e, res, e.statusCode || 500, req);
+    });
 };
 
 module.exports = {
