@@ -1,0 +1,46 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Deployment
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  push:
+    branches: [ 'master' ]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+      - name: copy files to remote server via ssh
+        uses: appleboy/scp-action@master
+        with:
+          host: "185.213.175.212"
+          username: "prasanna"
+          password: "PrasannaM@1122"
+          port: 22
+          source: "*"
+          target: "/home/prasanna/deplyement/object-identity/"
+
+      - uses: appleboy/ssh-action@master
+        name: Docker Build and Container run
+        with:
+          host: "185.213.175.212"
+          username: "prasanna"
+          password: "PrasannaM@1122"
+          port: 22
+          script: |
+            cd /home/prasanna/deplyement/object-identity
+            pwd
+            sudo /usr/bin/docker stop object-identity
+            sudo /usr/bin/docker rm object-identity
+            sudo /usr/bin/docker rmi magcentre/object-identity .
+            sudo /usr/bin/docker build -t magcentre/object-identity  .
+            sudo /usr/bin/docker run --network=magcentre-network --name=object-identity -p 5000:5000 -d magcentre/object-identity 

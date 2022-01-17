@@ -46,7 +46,7 @@ const getProfile = (req, res) => {
     .then((e) => sendResult(e, 200, res, req))
     .catch((e) => {
       logger.error(e);
-      sendError(e, res, e.statusCode || 500, req)
+      sendError(e, res, e.statusCode || 500, req);
     });
 };
 
