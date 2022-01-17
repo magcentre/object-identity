@@ -12,7 +12,7 @@ COPY . .
 
 ENV \
   NODE_ENV='development' \
-  PORT=5005 \
+  PORT=5004 \
   URL='mongodb://mongo-container:27017/magcentre' \
   JWT_SECRET='5avo57Ive6RawrejEspow0prO6risl' \
   JWT_ACCESS_EXPIRATION_MINUTES=30 \
