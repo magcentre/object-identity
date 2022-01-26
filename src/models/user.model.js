@@ -4,8 +4,8 @@ const { mongoose } = require('@magcentre/mongoose-helper');
 const bcrypt = require('bcryptjs');
 
 const userTypes = {
-  USER: 'access',
-  ADMIN: 'refresh',
+  USER: 'user',
+  ADMIN: 'admin',
 };
 
 const userSchema = mongoose.Schema(
@@ -54,6 +54,14 @@ const userSchema = mongoose.Schema(
       enum: [userTypes.ADMIN, userTypes.USER],
       default: userTypes.USER,
     },
+    profile: {
+      type: String,
+      trim: true,
+    },
+    isBlocked: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
@@ -93,6 +101,16 @@ userSchema.pre('save', async function (next) {
   }
   next();
 });
+
+/**
+ * update profile of the user with token
+ * @param {string} id - Users mongoId
+ * @param {Object}  params - The json config of the update values
+ * @returns {Promise<boolean>}
+ */
+userSchema.statics.updateProfile = function (id, params) {
+  return this.findByIdAndUpdate(id, { $set: params });
+};
 
 /**
  * @typedef User

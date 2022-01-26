@@ -9,7 +9,7 @@ const config = require('../configuration/config');
  * @param {string} email
  * @returns {Promise<User>}
  */
-const isEmailTaken = (email) => model.isEmailTaken(email);
+const isEmailTaken = (email, excludeUserId) => model.isEmailTaken(email, excludeUserId);
 
 /** row { statusCode: 400, message: "Incorr
  * Generate token
@@ -114,6 +114,14 @@ const generateAndSaveAuthToken = (user) => {
   });
 };
 
+/**
+ * Update the user profile
+ * @param {string} id user id
+ * @param {string} param json object of field and values to be updated
+ * @returns {Promise<Token>}
+ */
+const updateProfile = (id, param) => model.update({ _id: id } , { $set: param });
+
 module.exports = {
   isEmailTaken,
   createUser,
@@ -121,4 +129,5 @@ module.exports = {
   getUserByEmail,
   generateAndSaveAuthToken,
   verifyToken,
+  updateProfile,
 };

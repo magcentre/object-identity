@@ -69,9 +69,23 @@ const getAccessToken = (req, res) => {
     });
 };
 
+const updateProfile = (req, res) => {
+  const userBody = req.body;
+
+  processor.isEmailTaken(userBody.email, req.auth.sub)
+    .then((e) => processor.updateProfile(req.auth.sub, req.body))
+    .then((e) => processor.getUserById(req.auth.sub))
+    .then((e) => sendResult(e, 200, res, req))
+    .catch((e) => {
+      logger.error(e);
+      sendError(e.message, res, e.statusCode || 500, req);
+    });
+};
+
 module.exports = {
   create,
   authenticate,
   getProfile,
   getAccessToken,
+  updateProfile,
 };
