@@ -388,3 +388,101 @@ paths:
               message:
                 type: string
                 description: Short message about the error or missing information in request
+    patch:
+      tags:
+        - "user"
+      security:
+        - jwt: []
+      summary: Get profile of authenticated user
+      description: Get profile of authenticated user
+      operationId: updateProfile
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: Update user profile information
+          description: Update user profile information
+          schema:
+            type: object
+            required:
+              - firstName
+              - lastName
+              - email
+              - avatar
+            properties:
+              firstName:
+                type: string
+              lastName:
+                type: string
+              email:
+                type: string
+              avatar:
+                type: string
+      responses:
+        "200":
+          description: Load logged in users profile
+          schema:
+            properties:
+              _id:
+                type: string
+                description: "Mongo Object Id ( user id )"
+              firstName:
+                description: "Registered users first name"
+                type: string
+              lastName:
+                description: "Registered user last name"
+                type: string
+              email:
+                type: string
+                description: "Registered users email address"
+              role:
+                type: string
+                description: "Access role assigned to the authenticated user"
+              createdAt:
+                type: string
+                description: "Timestamp when the user object is created"
+              updatedAt:
+                type: string
+                description: "Timestamp when the user object is modified"
+              access:
+                type: object
+                description: Contains token and expiry timestamp for access token
+              refresh:
+                type: object
+                description: Contains token and expiry timestamp for refresh token
+        "403":
+          description: Unauthorized access, either token is not provided or expired
+          schema:
+            properties:
+              message:
+                type: string
+              code:
+                type: string
+              statusCode:
+                type: integer
+        "500":
+          description: Internal server error
+          schema:
+            properties:
+              statusCode:
+                type: integer
+                description: "statusCode for response to the request"
+              title:
+                type: string
+                description: "HTTP status code title for the response"
+              message:
+                type: string
+                description: "Short message about the error or missing information in request"
+        default:
+          description: Error
+          schema:
+            properties:
+              statusCode:
+                type: integer
+                description: statusCode for response to the request
+              title:
+                type: string
+                description: HTTP status code title for the response
+              message:
+                type: string
+                description: Short message about the error or missing information in request
