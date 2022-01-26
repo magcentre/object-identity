@@ -120,7 +120,15 @@ const generateAndSaveAuthToken = (user) => {
  * @param {string} param json object of field and values to be updated
  * @returns {Promise<Token>}
  */
-const updateProfile = (id, param) => model.update({ _id: id } , { $set: param });
+const updateProfile = (id, param) => model.update({ _id: id }, { $set: param });
+
+/**
+ * Convert list of userIds into objects
+ * @param {List<String>} ids user id
+ * * @param {List<String>} display display parameters
+ * @returns {Promise<List<User>>}
+ */
+const id2object = (ids, display) => model.find({ _id: { $in: ids } }, display);
 
 module.exports = {
   isEmailTaken,
@@ -130,4 +138,5 @@ module.exports = {
   generateAndSaveAuthToken,
   verifyToken,
   updateProfile,
+  id2object,
 };

@@ -217,6 +217,108 @@ paths:
               message:
                 type: string
                 description: Short message about the error or missing information in request
+  /user/id2object:
+    x-swagger-router-controller: user.controller
+    post:
+      summary: Convert list of userids into objects
+      tags:
+        - "user"
+      description: Converter
+      operationId: id2object
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: login body object
+          description: username password to perform authentication
+          schema:
+            type: object
+            required:
+              - ids
+              - display
+            properties:
+              ids:
+                type: array
+                items:
+                  - type: string
+              display:
+                type: object
+      responses:
+        "200":
+          description: Success
+          schema:
+            properties:
+              _id:
+                type: string
+                description: "Mongo Object Id ( user id )"
+              firstName:
+                description: "Registered users first name"
+                type: string
+              lastName:
+                description: "Registered user last name"
+                type: string
+              email:
+                type: string
+                description: "Registered users email address"
+              role:
+                type: string
+                description: "Access role assigned to the authenticated user"
+              createdAt:
+                type: string
+                description: "Timestamp when the user object is created"
+              updatedAt:
+                type: string
+                description: "Timestamp when the user object is modified"
+              access:
+                type: object
+                description: Contains token and expiry timestamp for access token
+              refresh:
+                type: object
+                description: Contains token and expiry timestamp for refresh token
+        "400":
+          description: Bad Request entry, in case validation failed or missing of required parameters
+          schema:
+            properties:
+              statusCode:
+                type: integer
+                description: "statusCode for response to the request"
+              title:
+                type: string
+                description: "HTTP status code title for the response"
+              message:
+                type: string
+                description: "Short message about the error or missing information in request"
+              info:
+                type: object
+                description: "Error object"
+        "500":
+          description: Internal server error
+          schema:
+            properties:
+              statusCode:
+                type: integer
+                description: "statusCode for response to the request"
+              title:
+                type: string
+                description: "HTTP status code title for the response"
+              message:
+                type: string
+                description: "Short message about the error or missing information in request"
+        default:
+          description: Error
+          schema:
+            properties:
+              statusCode:
+                type: integer
+                description: statusCode for response to the request
+              title:
+                type: string
+                description: HTTP status code title for the response
+              message:
+                type: string
+                description: Short message about the error or missing information in request                
   /user/refresh-token:
     x-swagger-router-controller: user.controller
     post:

@@ -82,10 +82,20 @@ const updateProfile = (req, res) => {
     });
 };
 
+const id2object = (req, res) => {
+  processor.id2object(req.body.ids, req.body.display)
+    .then((e) => sendResult(e, 200, res, req))
+    .catch((e) => {
+      logger.error(e);
+      sendError(e.message, res, e.statusCode || 500, req);
+    });
+}
+
 module.exports = {
   create,
   authenticate,
   getProfile,
   getAccessToken,
   updateProfile,
+  id2object
 };
