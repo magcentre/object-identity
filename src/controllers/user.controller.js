@@ -89,7 +89,16 @@ const id2object = (req, res) => {
       logger.error(e);
       sendError(e.message, res, e.statusCode || 500, req);
     });
-}
+};
+
+const search = (req, res) => {
+  processor.search(req.query.q)
+    .then((e) => sendResult(e, 200, res, req))
+    .catch((e) => {
+      logger.error(e);
+      sendError(e.message, res, e.statusCode || 500, req);
+    });
+};
 
 module.exports = {
   create,
@@ -97,5 +106,6 @@ module.exports = {
   getProfile,
   getAccessToken,
   updateProfile,
-  id2object
+  id2object,
+  search,
 };

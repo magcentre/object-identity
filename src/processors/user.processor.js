@@ -130,6 +130,14 @@ const updateProfile = (id, param) => model.update({ _id: id }, { $set: param });
  */
 const id2object = (ids, display) => model.find({ _id: { $in: ids } }, display);
 
+/**
+ * Convert list of userIds into objects
+ * @param {List<String>} ids user id
+ * * @param {List<String>} display display parameters
+ * @returns {Promise<List<User>>}
+ */
+const search = (q) => model.find({ $or: [{ firstName: { $regex: q } }, { lastName: { $regex: q } }] }, { firstName: 1, lastName: 1, email: 1 });
+
 module.exports = {
   isEmailTaken,
   createUser,
@@ -139,4 +147,5 @@ module.exports = {
   verifyToken,
   updateProfile,
   id2object,
+  search,
 };

@@ -23,6 +23,54 @@ consumes:
 produces:
   - application/json
 paths:
+  /user/search:
+    x-swagger-router-controller: user.controller
+    get:
+      summary: Create a new user account
+      description: Create a new user account
+      operationId: search
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: q
+          type: string
+      responses:
+        "200":
+          description: Success
+          schema:
+            properties:
+              _id:
+                type: string
+                description: "Mongo Object Id ( user id )"
+              firstName:
+                description: "Registered users first name"
+                type: string
+              lastName:
+                description: "Registered user last name"
+                type: string
+              email:
+                type: string
+                description: "Registered users email address"
+              password:
+                type: string
+                description: "Hash of password provided during the registration"
+        default:
+          description: Error
+          schema:
+            properties:
+              statusCode:
+                type: integer
+                description: "statusCode for response to the request"
+              title:
+                type: string
+                description: "HTTP status code title for the response"
+              message:
+                type: string
+                description: "Short message about the error or missing information in request"
+
   /user/create:
     x-swagger-router-controller: user.controller
     post:
