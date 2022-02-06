@@ -23,6 +23,21 @@ consumes:
 produces:
   - application/json
 paths:
+  /system-health:
+    x-swagger-router-controller: system.controller
+    get:
+      description: Returns the systems cpu information
+      operationId: getHealthCheck
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/SystemHealthResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
   /user/search:
     x-swagger-router-controller: user.controller
     get:
@@ -366,7 +381,7 @@ paths:
                 description: HTTP status code title for the response
               message:
                 type: string
-                description: Short message about the error or missing information in request                
+                description: Short message about the error or missing information in request
   /user/refresh-token:
     x-swagger-router-controller: user.controller
     post:
@@ -636,3 +651,15 @@ paths:
               message:
                 type: string
                 description: Short message about the error or missing information in request
+
+definitions:
+  SystemHealthResponse:
+    properties:
+      message:
+        type: string
+  ErrorResponse:
+    required:
+      - message
+    properties:
+      message:
+        type: string
