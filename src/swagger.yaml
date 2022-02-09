@@ -44,6 +44,8 @@ paths:
       summary: Create a new user account
       description: Create a new user account
       operationId: search
+      security:
+        - jwt: []
       consumes:
         - application/json
       produces:
@@ -286,6 +288,8 @@ paths:
       summary: Convert list of userids into objects
       tags:
         - "user"
+      security:
+        - jwt: []
       description: Converter
       operationId: id2object
       consumes:
