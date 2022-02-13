@@ -11,7 +11,7 @@ const create = (req, res) => {
     .isEmailTaken(userBody.email)
     .then((e) => {
       if (e) throw new Error({ statusCode: 400, message: 'Email already exists' });
-      return processor.createUser(userBody);
+      return processor.createUser(userBody, req.headers);
     })
     .then((e) => sendResult(e, 200, res, req))
     .catch((e) => {

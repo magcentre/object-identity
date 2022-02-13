@@ -1,8 +1,10 @@
 const moment = require('moment');
 const jwt = require('jsonwebtoken');
+const utils = require('@magcentre/api-utils');
 const { model } = require('../models/user.model');
 const token = require('../models/token.model');
 const config = require('../configuration/config');
+const { createBucket } = require('../constants');
 
 /**
  * Generate token
@@ -36,7 +38,21 @@ const generateToken = (userId, expires, type, secret = config.jwt.secret) => {
  * @param {Object} userBody
  * @returns {Promise<User>}
  */
-const createUser = (body) => model.create(body);
+const createUser = (body, header) => new Promise((resolve, reject) => model.create(body)
+  .then((newUser) => {
+    console.log('New user', newUser);
+    const userObject = newUser.toObject();
+    return utils.connect(createBucket, 'POST', { bucketName: userObject._id }, header)
+      .then((e) => {
+        resolve(newUser);
+      }).catch((e) => {
+        console.log('Failed user', e);
+        reject(e);
+      });
+  }).catch((e) => {
+    console.log('Failed user', e);
+    reject(e);
+  }));
 
 /**
  * Get user by id
