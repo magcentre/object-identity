@@ -43,4 +43,4 @@ jobs:
             sudo /usr/bin/docker rm object-identity
             sudo /usr/bin/docker rmi magcentre/object-identity .
             sudo /usr/local/bin/docker-compose down
-            sudo /usr/local/bin/docker-compose up
+            sudo /usr/local/bin/docker-compose up -d
