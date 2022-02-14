@@ -6,7 +6,6 @@ const processor = require('../processors/user.processor');
 
 const create = (req, res) => {
   const userBody = req.body;
-
   processor
     .isEmailTaken(userBody.email)
     .then((e) => {
@@ -73,8 +72,8 @@ const updateProfile = (req, res) => {
   const userBody = req.body;
 
   processor.isEmailTaken(userBody.email, req.auth.sub)
-    .then((e) => processor.updateProfile(req.auth.sub, req.body))
-    .then((e) => processor.getUserById(req.auth.sub))
+    .then(() => processor.updateProfile(req.auth.sub, req.body))
+    .then(() => processor.getUserById(req.auth.sub))
     .then((e) => sendResult(e, 200, res, req))
     .catch((e) => {
       logger.error(e);

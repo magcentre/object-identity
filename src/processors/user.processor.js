@@ -38,22 +38,16 @@ const generateToken = (userId, expires, type, secret = config.jwt.secret) => {
  * @param {Object} userBody
  * @returns {Promise<User>}
  */
-const createUser = (body, header) => new Promise((resolve, reject) => model.create(body)
-  .then((newUser) => {
-    console.log('New user', newUser);
-    const userObject = newUser.toObject();
-    return utils.connect(createBucket, 'POST', { bucketName: userObject._id }, header)
-      .then((e) => {
-        resolve(newUser);
-      }).catch((e) => {
-        console.log('Failed user', e);
-        reject(e);
-      });
-  }).catch((e) => {
-    console.log('Failed user', e);
-    reject(e);
-  }));
-
+const createUser = (body) => new Promise((resolve, reject) => {
+  let user = {};
+  model.create(body)
+    .then((newUser) => {
+      user = newUser.toObject();
+      return utils.connect(createBucket, 'POST', { bucketName: newUser._id.toHexString() });
+    })
+    .then(() => resolve(user))
+    .catch((e) => reject(e));
+});
 /**
  * Get user by id
  * @param {ObjectId} id
@@ -154,6 +148,8 @@ const id2object = (ids, display) => model.find({ _id: { $in: ids } }, display);
  */
 const search = (q) => model.find({ $or: [{ firstName: { $regex: q } }, { lastName: { $regex: q } }] }, { firstName: 1, lastName: 1, email: 1 });
 
+const createUserBucket = (bucketName) => utils.connect(createBucket, 'POST', { bucketName });
+
 module.exports = {
   isEmailTaken,
   createUser,
@@ -164,4 +160,5 @@ module.exports = {
   updateProfile,
   id2object,
   search,
+  createUserBucket,
 };
