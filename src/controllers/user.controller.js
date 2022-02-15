@@ -25,16 +25,16 @@ const authenticate = (req, res) => {
   processor.getUserByEmail(loginBody.email)
     .then((user) => {
       if (user) return user.isPasswordMatch(loginBody.password);
-      throw new Error({ statusCode: 400, message: 'Incorrect email or password' });
+      sendError('Unregisted email address', res, 400, req);
     })
     .then((user) => {
       if (user.match) return processor.generateAndSaveAuthToken(user);
-      throw new Error({ statusCode: 400, message: 'Incorrect email or password' });
+      sendError('Invalid email and password', res, 400, req);
     })
     .then((e) => sendResult(e, 200, res, req))
     .catch((e) => {
       logger.error(e);
-      sendError(e, res, e.statusCode || 500, req);
+      sendError(e.message, res, e.statusCode || 500, req);
     });
 };
 
