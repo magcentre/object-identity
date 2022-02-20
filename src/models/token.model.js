@@ -45,8 +45,20 @@ const tokenSchema = mongoose.Schema(
  * @param {function(err, model)} cb - Callback function
  * @returns {Promise<Token>} -
  */
-tokenSchema.statics.createToken = function(tokenConfig, cb) {
+tokenSchema.statics.createToken = function (tokenConfig, cb) {
   this.create(tokenConfig, cb);
+};
+
+/**
+ * Create and save access token
+ * @param {object} tokenConfig - javscript object with all required parameters to create token
+ * @param {function(err, model)} cb - Callback function
+ * @returns {Promise<Token>} -
+ */
+tokenSchema.statics.findToken = async function (tokenConfig, cb) {
+  const token = await this.findOne(tokenConfig);
+  if (token) return token;
+  throw new Error('Not a valid refresh token');
 };
 
 /**

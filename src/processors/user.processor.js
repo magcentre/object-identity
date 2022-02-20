@@ -96,12 +96,14 @@ const verifyEmailAndPassword = (email, password) => new Promise((resolve, reject
  * @param {string} type
  * @returns {Promise<Token>}
  */
-const verifyToken = (refreshToken) => {
-  const payload = jwt.verify(refreshToken, config.jwt.secret);
-  return token.model.findOne({
-    token: refreshToken, type: token.types.REFRESH, user: payload.sub, blacklisted: false,
-  });
-};
+const verifyToken = (refreshToken) => new Promise((resolve, reject) => {
+  utils.verifyJWTToken(refreshToken, config.jwt.secret)
+    .then((decoded) => token.model.findToken({
+      token: refreshToken, type: token.types.REFRESH, user: decoded.sub, blacklisted: false,
+    }))
+    .then((token) => resolve(token))
+    .catch((err) => reject(err));
+});
 
 /**
  * Generate auth tokens
