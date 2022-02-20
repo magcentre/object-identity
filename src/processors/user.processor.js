@@ -11,7 +11,28 @@ const { createBucket } = require('../constants');
  * @param {string} email
  * @returns {Promise<User>}
  */
-const isEmailTaken = (email, excludeUserId) => model.isEmailTaken(email, excludeUserId);
+const isEmailTaken = (email, excludeUserId) => new Promise((resolve, reject) => {
+  model.isEmailTaken(email, excludeUserId)
+    .then((e) => {
+      if (e) reject(Error('Email already exists'));
+      resolve(true);
+    })
+    .catch((err) => reject(err));
+});
+
+/**
+ * Check if account exists or not with provided email address
+ * @param {string} email
+ * @returns {Promise<User>}
+ */
+const verifyEmail = (email, excludeUserId) => new Promise((resolve, reject) => {
+  model.isEmailTaken(email, excludeUserId)
+    .then((e) => {
+      if (e) reject(Error('Email already exists'));
+      resolve(true);
+    })
+    .catch((err) => reject(err));
+});
 
 /** row { statusCode: 400, message: "Incorr
  * Generate token
@@ -152,6 +173,7 @@ const createUserBucket = (bucketName) => utils.connect(createBucket, 'POST', { b
 
 module.exports = {
   isEmailTaken,
+  verifyEmail,
   createUser,
   getUserById,
   getUserByEmail,
