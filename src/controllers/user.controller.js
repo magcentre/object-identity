@@ -9,29 +9,22 @@ const create = (req, res) => {
   processor
     .verifyEmail(userBody.email)
     .then(() => processor.createUser(userBody, req.headers))
-    .then((e) => sendResult(e, 200, res, req))
-    .catch((e) => {
-      logger.error(e);
-      sendError(e, res, e.statusCode || 500, req);
+    .then((user) => sendResult(user, 200, res, req))
+    .catch((err) => {
+      logger.error(err.message);
+      sendError(err, res, err.statusCode || 500, req);
     });
 };
 
 const authenticate = (req, res) => {
   const loginBody = req.body;
 
-  processor.getUserByEmail(loginBody.email)
-    .then((user) => {
-      if (user) return user.isPasswordMatch(loginBody.password);
-      sendError('Unregisted email address', res, 400, req);
-    })
-    .then((user) => {
-      if (user.match) return processor.generateAndSaveAuthToken(user);
-      sendError('Invalid email and password', res, 400, req);
-    })
+  processor.verifyEmailAndPassword(loginBody.email, loginBody.password)
+    .then((user) => processor.generateAndSaveAuthToken(user))
     .then((e) => sendResult(e, 200, res, req))
-    .catch((e) => {
-      logger.error(e);
-      sendError(e.message, res, e.statusCode || 500, req);
+    .catch((err) => {
+      logger.error(err.message);
+      sendError(err, res, err.statusCode || 500, req);
     });
 };
 

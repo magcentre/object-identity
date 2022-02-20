@@ -88,8 +88,9 @@ userSchema.methods.isPasswordMatch = function (password) {
   const user = this;
   return new Promise((resolve, reject) => {
     bcrypt.compare(password, user.password, (err, isValid) => {
-      if (err) return reject(err);
-      return resolve({ match: isValid, ...user.toObject() });
+      if (err) reject(err);
+      if (!isValid) reject(new Error('Not a valid email and password'));
+      resolve({ match: isValid, ...user.toObject() });
     });
   });
 };
@@ -106,10 +107,22 @@ userSchema.pre('save', async function (next) {
  * update profile of the user with token
  * @param {string} id - Users mongoId
  * @param {Object}  params - The json config of the update values
- * @returns {Promise<boolean>}
+ * @returns {Promise<User>}
  */
 userSchema.statics.updateProfile = function (id, params) {
   return this.findByIdAndUpdate(id, { $set: params });
+};
+
+/**
+ * seach user by email address and return
+ * @param {string} id - Users mongoId
+ * @param {Object}  params - The json config of the update values
+ * @returns {Promise<User>}
+ */
+userSchema.statics.getUserByEmail = async function (email) {
+  const user = await this.findOne({ email });
+  if (user) return user;
+  throw Error('User does not exists');
 };
 
 /**

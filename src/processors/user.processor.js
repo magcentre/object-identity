@@ -14,7 +14,7 @@ const { createBucket } = require('../constants');
 const isEmailTaken = (email, excludeUserId) => new Promise((resolve, reject) => {
   model.isEmailTaken(email, excludeUserId)
     .then((e) => {
-      if (e) reject(Error('Email already exists'));
+      if (e) reject(new Error('Email already exists'));
       resolve(true);
     })
     .catch((err) => reject(err));
@@ -28,13 +28,13 @@ const isEmailTaken = (email, excludeUserId) => new Promise((resolve, reject) => 
 const verifyEmail = (email, excludeUserId) => new Promise((resolve, reject) => {
   model.isEmailTaken(email, excludeUserId)
     .then((e) => {
-      if (e) reject(Error('Email already exists'));
+      if (e) reject(new Error('Email already exists'));
       resolve(true);
     })
     .catch((err) => reject(err));
 });
 
-/** row { statusCode: 400, message: "Incorr
+/**
  * Generate token
  * @param {ObjectId} userId
  * @param {Moment} expires
@@ -82,6 +82,13 @@ const getUserById = (id) => model.findById(id, { password: 0 });
  * @returns {Promise<User>}
  */
 const getUserByEmail = (email) => model.findOne({ email });
+
+const verifyEmailAndPassword = (email, password) => new Promise((resolve, reject) => {
+  model.getUserByEmail(email)
+    .then((user) => user.isPasswordMatch(password))
+    .then((user) => resolve(user))
+    .catch((err) => reject(err));
+});
 
 /**
  * Verify token and return token doc (or throw an error if it is not valid)
@@ -173,6 +180,7 @@ const createUserBucket = (bucketName) => utils.connect(createBucket, 'POST', { b
 
 module.exports = {
   isEmailTaken,
+  verifyEmailAndPassword,
   verifyEmail,
   createUser,
   getUserById,
