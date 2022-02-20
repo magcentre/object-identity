@@ -101,7 +101,7 @@ const verifyToken = (refreshToken) => new Promise((resolve, reject) => {
     .then((decoded) => token.model.findToken({
       token: refreshToken, type: token.types.REFRESH, user: decoded.sub, blacklisted: false,
     }))
-    .then((token) => resolve(token))
+    .then((tokenResponse) => resolve(tokenResponse))
     .catch((err) => reject(err));
 });
 
