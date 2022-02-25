@@ -22,9 +22,6 @@ const userSchema = mongoose.Schema(
     },
     email: {
       type: String,
-      required: true,
-      unique: true,
-      trim: true,
       lowercase: true,
       validate(value) {
         const e = String(value)
@@ -54,7 +51,25 @@ const userSchema = mongoose.Schema(
       enum: [userTypes.ADMIN, userTypes.USER],
       default: userTypes.USER,
     },
-    profile: {
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    mobile: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      validate(value) {
+        if (!value.match(/\d/) || !value.match(/^(?:(?:\+|0{0,2})91(\s*|[\-])?|[0]?)?([6789]\d{2}([ -]?)\d{3}([ -]?)\d{4})$/)) {
+          throw Error({ statuCode: 400, message: 'Enter valid mobile number' });
+        }
+      },
+    },
+    otp: {
+      type: Number,
+    },
+    avatar: {
       type: String,
       trim: true,
     },
@@ -68,6 +83,8 @@ const userSchema = mongoose.Schema(
     versionKey: false,
   },
 );
+
+userSchema.index({ mobile: 1, email: 1 }, { unique: 1 });
 
 /**
  * Check if email is taken
@@ -110,6 +127,29 @@ userSchema.pre('save', async function (next) {
  */
 userSchema.statics.updateProfile = function (id, params) {
   return this.findByIdAndUpdate(id, { $set: params });
+};
+
+/**
+ * verify mobile number, if mobile exists return the user object otherwise throw error
+ * @param {Number} mobile - Mobile number of registreed user
+ * @returns {Promise<boolean>}
+ */
+userSchema.statics.verifyMobile = function (mobile) {
+  return new Promise((resolve, reject) => {
+    this.findOne({ mobile }).then((user) => {
+      if (!user) reject(new Error({ message: 'Mobile is not registered.', statuCode: 400 }));
+      resolve(user);
+    });
+  });
+};
+
+
+userSchema.statics.setOTP = function (mobile, otp) {
+  return new Promise((resolve, reject) => {
+    this.findOneAndUpdate({ mobile }, { otp }).then((user) => {
+      console.log(user);
+    });
+  });
 };
 
 /**

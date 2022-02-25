@@ -7,7 +7,7 @@ const config = require('../configuration/config');
 const { createBucket } = require('../constants');
 
 /**
- * Generate token
+ * verify if the email is avalible to register
  * @param {string} email
  * @returns {Promise<User>}
  */
@@ -148,7 +148,26 @@ const id2object = (ids, display) => model.find({ _id: { $in: ids } }, display);
  */
 const search = (q) => model.find({ $or: [{ firstName: { $regex: q } }, { lastName: { $regex: q } }] }, { firstName: 1, lastName: 1, email: 1 });
 
+/**
+ * Create a bucket for the verified user
+ * @param {String} bucketName Bucket name to be created
+ * @returns create bucket in minio for the user
+ */
 const createUserBucket = (bucketName) => utils.connect(createBucket, 'POST', { bucketName });
+
+/**
+ * Generate random 6 digit otp
+ * @returns {Number} random 6 digit otp
+ */
+const generateOTP = () => Math.floor(Math.random() * 899999 + 100000);
+
+const verifyUserAndGenerateOTP = (mobile) => new Promise((resolve, reject) => {
+  const newOTP = generateOTP();
+  model.verifyMobile(mobile)
+    .then((user) => model.setOTP(mobile, newOTP))
+    .then((e) => console.log(e))
+    .catch((e) => reject(e));
+});
 
 module.exports = {
   isEmailTaken,
@@ -161,4 +180,5 @@ module.exports = {
   id2object,
   search,
   createUserBucket,
+  verifyUserAndGenerateOTP,
 };
