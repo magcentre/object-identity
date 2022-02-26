@@ -163,17 +163,28 @@ const generateOTP = () => Math.floor(Math.random() * 899999 + 100000);
 
 const verifyUserAndGenerateOTP = (mobile) => new Promise((resolve, reject) => {
   const newOTP = generateOTP();
-  model.verifyMobile(mobile)
+  model.verifyMobile(mobile)  
     .then((user) => model.setOTP(mobile, newOTP))
     .then((e) => console.log(e))
-    .catch((e) => reject(e));
+    .catch((e) => {
+      reject(e);
+    });
 });
 
 const verifyMobile = (mobile) => new Promise((resolve, reject) => {
   model.verifyMobile(mobile)
     .then((user) => {
-      if (!user) reject(new Error({ message: 'mobile does not exists', statusCode: 400 }));
-      resolve('mast');
+      if (!user) reject(new Error('mobile does not exists'));
+      resolve(mobile);
+    })
+    .catch((e) => reject(e));
+});
+
+const registerWithMobile = (mobile) => new Promise((resolve, reject) => {
+  model.create(mobile)
+    .then((user) => {
+      if (!user) reject(new Error('mobile does not exists'));
+      resolve(mobile);
     })
     .catch((e) => reject(e));
 });

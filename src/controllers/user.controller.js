@@ -110,10 +110,11 @@ const otpLogin = (req, res) => {
 
 const register = (req, res) => {
   processor.verifyMobile(req.body.mobile)
+    .then((mobile) => processor)
     .then((e) => sendResult(e, 200, res, req))
     .catch((e) => {
-      logger.error( JSON.parse(e.message));
-      sendError(e, res, e.statusCode || 500, req);
+      logger.error(e);
+      sendError(e.message, res, e.statusCode || 500, req);
     });
 };
 
