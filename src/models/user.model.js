@@ -135,21 +135,11 @@ userSchema.statics.updateProfile = function (id, params) {
  * @returns {Promise<boolean>}
  */
 userSchema.statics.verifyMobile = function (mobile) {
-  return new Promise((resolve, reject) => {
-    this.findOne({ mobile }).then((user) => {
-      if (!user) reject(new Error({ message: 'Mobile is not registered.', statuCode: 400 }));
-      resolve(user);
-    });
-  });
+  return this.findOne({ mobile });
 };
 
-
 userSchema.statics.setOTP = function (mobile, otp) {
-  return new Promise((resolve, reject) => {
-    this.findOneAndUpdate({ mobile }, { otp }).then((user) => {
-      console.log(user);
-    });
-  });
+  return this.findOneAndUpdate({ mobile }, { $set: { otp } });
 };
 
 /**

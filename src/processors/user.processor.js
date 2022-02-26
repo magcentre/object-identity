@@ -169,6 +169,15 @@ const verifyUserAndGenerateOTP = (mobile) => new Promise((resolve, reject) => {
     .catch((e) => reject(e));
 });
 
+const verifyMobile = (mobile) => new Promise((resolve, reject) => {
+  model.verifyMobile(mobile)
+    .then((user) => {
+      if (!user) reject(new Error({ message: 'mobile does not exists', statusCode: 400 }));
+      resolve('mast');
+    })
+    .catch((e) => reject(e));
+});
+
 module.exports = {
   isEmailTaken,
   createUser,
@@ -181,4 +190,5 @@ module.exports = {
   search,
   createUserBucket,
   verifyUserAndGenerateOTP,
+  verifyMobile,
 };
