@@ -99,7 +99,7 @@ const search = (req, res) => {
     });
 };
 
-const verifyMobile = (req, res) => {
+const sendOTP = (req, res) => {
   processor.verifyUserAndGenerateOTP(req.body.mobile)
     .then((e) => sendResult(e, 200, res, req))
     .catch((e) => {
@@ -126,6 +126,6 @@ module.exports = {
   updateProfile,
   id2object,
   search,
-  verifyMobile,
-  verifyOtp
+  sendOTP,
+  verifyOtp,
 };

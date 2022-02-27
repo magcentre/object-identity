@@ -370,14 +370,14 @@ paths:
                 type: string
                 description: Short message about the error or missing information in request
 
-  /user/verifyMobile:
+  /user/sendOTP:
     x-swagger-router-controller: user.controller
     post:
       summary: Authenticate Registered user
       tags:
         - "user"
       description: Verify the given mobile number, if the mobile number is not exists create an entry
-      operationId: verifyMobile
+      operationId: sendOTP
       consumes:
         - application/json
       produces:

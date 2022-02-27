@@ -81,8 +81,6 @@ const userSchema = mongoose.Schema(
   },
 );
 
-userSchema.index({ mobile: 1, email: 1 }, { unique: 1 });
-
 /**
  * Check if email is taken
  * @param {string} email - The user's email
