@@ -140,9 +140,13 @@ userSchema.statics.setOTP = function (mobile, otp) {
 };
 
 userSchema.statics.createuserAndSendOTP = function (mobile, otp) {
-  return this.create({ mobile, otp });
+  return this.create({ mobile, otp, isVerified: false });
 };
 
+
+userSchema.statics.getUserByMobile = function (mobile, otp) {
+  return this.findOne({ mobile });
+};
 /**
  * @typedef User
  */

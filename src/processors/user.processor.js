@@ -185,11 +185,13 @@ const verifyMobile = (mobile) => new Promise((resolve, reject) => {
     .catch((e) => reject(e));
 });
 
-const registerWithMobile = (mobile) => new Promise((resolve, reject) => {
-  model.create(mobile)
+const verifyOtp = (mobile, otp) => new Promise((resolve, reject) => {
+  model.getUserByMobile(mobile)
     .then((user) => {
-      if (!user) reject(new Error('mobile does not exists'));
-      resolve(mobile);
+      if (user.otp === parseInt(otp, 10)) {
+        resolve(user);
+      }
+      reject(new Error({ message: 'Invalid OTP!!', statusCode: 400 }));
     })
     .catch((e) => reject(e));
 });
@@ -207,4 +209,5 @@ module.exports = {
   createUserBucket,
   verifyUserAndGenerateOTP,
   verifyMobile,
+  verifyOtp,
 };

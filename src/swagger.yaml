@@ -182,7 +182,7 @@ paths:
               message:
                 type: string
                 description: "Short message about the error or missing information in request"
-  
+
   /user/register:
     x-swagger-router-controller: user.controller
     post:
@@ -369,14 +369,14 @@ paths:
               message:
                 type: string
                 description: Short message about the error or missing information in request
-  
+
   /user/verifyMobile:
     x-swagger-router-controller: user.controller
     post:
       summary: Authenticate Registered user
       tags:
         - "user"
-      description: Authenticate Registered user
+      description: Verify the given mobile number, if the mobile number is not exists create an entry
       operationId: verifyMobile
       consumes:
         - application/json
@@ -398,33 +398,12 @@ paths:
           description: Success
           schema:
             properties:
-              _id:
+              mobile:
                 type: string
-                description: "Mongo Object Id ( user id )"
-              firstName:
-                description: "Registered users first name"
+                description: "Mobile number"
+              otp:
+                description: "OTP to verify the mobile number provided"
                 type: string
-              lastName:
-                description: "Registered user last name"
-                type: string
-              email:
-                type: string
-                description: "Registered users email address"
-              role:
-                type: string
-                description: "Access role assigned to the authenticated user"
-              createdAt:
-                type: string
-                description: "Timestamp when the user object is created"
-              updatedAt:
-                type: string
-                description: "Timestamp when the user object is modified"
-              access:
-                type: object
-                description: Contains token and expiry timestamp for access token
-              refresh:
-                type: object
-                description: Contains token and expiry timestamp for refresh token
         "400":
           description: Bad Request entry, in case validation failed or missing of required parameters
           schema:
@@ -467,7 +446,87 @@ paths:
               message:
                 type: string
                 description: Short message about the error or missing information in request
-  
+
+  /user/verifyOTP:
+    x-swagger-router-controller: user.controller
+    post:
+      summary: Authenticate Registered user
+      tags:
+        - "user"
+      description: Verify otp generated againsts the mobile number
+      operationId: verifyOtp
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: OTP body
+          description: otp verification
+          schema:
+            type: object
+            required:
+              - mobile
+              - otp
+            properties:
+              mobile:
+                type: string
+              otp:
+                type: string
+      responses:
+        "200":
+          description: Success
+          schema:
+            properties:
+              mobile:
+                type: string
+                description: "Mobile number"
+              otp:
+                description: "OTP to verify the mobile number provided"
+                type: string
+        "400":
+          description: Bad Request entry, in case validation failed or missing of required parameters
+          schema:
+            properties:
+              statusCode:
+                type: integer
+                description: "statusCode for response to the request"
+              title:
+                type: string
+                description: "HTTP status code title for the response"
+              message:
+                type: string
+                description: "Short message about the error or missing information in request"
+              info:
+                type: object
+                description: "Error object"
+        "500":
+          description: Internal server error
+          schema:
+            properties:
+              statusCode:
+                type: integer
+                description: "statusCode for response to the request"
+              title:
+                type: string
+                description: "HTTP status code title for the response"
+              message:
+                type: string
+                description: "Short message about the error or missing information in request"
+        default:
+          description: Error
+          schema:
+            properties:
+              statusCode:
+                type: integer
+                description: statusCode for response to the request
+              title:
+                type: string
+                description: HTTP status code title for the response
+              message:
+                type: string
+                description: Short message about the error or missing information in request
+
   /user/id2object:
     x-swagger-router-controller: user.controller
     post:

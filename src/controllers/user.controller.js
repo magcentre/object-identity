@@ -108,6 +108,16 @@ const verifyMobile = (req, res) => {
     });
 };
 
+const verifyOtp = (req, res) => {
+  processor.verifyOtp(req.body.mobile, req.body.otp)
+    .then((user) => processor.generateAndSaveAuthToken(user.toObject()))
+    .then((e) => sendResult(e, 200, res, req))
+    .catch((e) => {
+      logger.error(e.message);
+      sendError(e.message, res, e.statusCode || 500, req);
+    });
+};
+
 module.exports = {
   create,
   authenticate,
@@ -116,5 +126,6 @@ module.exports = {
   updateProfile,
   id2object,
   search,
-  verifyMobile
+  verifyMobile,
+  verifyOtp
 };
