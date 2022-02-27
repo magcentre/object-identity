@@ -196,6 +196,19 @@ const verifyOtp = (mobile, otp) => new Promise((resolve, reject) => {
     .catch((e) => reject(e));
 });
 
+const isNewRegistration = (user) => new Promise((resolve, reject) => {
+  if (user.isVerified) {
+    resolve(user);
+  }
+  model.updateProfile(user._id, { isVerified: true })
+    .then(() => createUserBucket(user._id))
+    .then(() => {
+      delete user.isVerified;
+      resolve(user);
+    })
+    .catch((err) => reject(err));
+});
+
 module.exports = {
   isEmailTaken,
   createUser,
@@ -210,4 +223,5 @@ module.exports = {
   verifyUserAndGenerateOTP,
   verifyMobile,
   verifyOtp,
+  isNewRegistration,
 };

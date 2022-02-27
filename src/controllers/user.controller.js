@@ -110,6 +110,7 @@ const sendOTP = (req, res) => {
 
 const verifyOtp = (req, res) => {
   processor.verifyOtp(req.body.mobile, req.body.otp)
+    .then((user) => processor.isNewRegistration(user))
     .then((user) => processor.generateAndSaveAuthToken(user.toObject()))
     .then((e) => sendResult(e, 200, res, req))
     .catch((e) => {
