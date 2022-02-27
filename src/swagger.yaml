@@ -370,14 +370,14 @@ paths:
                 type: string
                 description: Short message about the error or missing information in request
   
-  /user/otpLogin:
+  /user/verifyMobile:
     x-swagger-router-controller: user.controller
     post:
       summary: Authenticate Registered user
       tags:
         - "user"
       description: Authenticate Registered user
-      operationId: otpLogin
+      operationId: verifyMobile
       consumes:
         - application/json
       produces:

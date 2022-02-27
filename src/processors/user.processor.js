@@ -163,9 +163,14 @@ const generateOTP = () => Math.floor(Math.random() * 899999 + 100000);
 
 const verifyUserAndGenerateOTP = (mobile) => new Promise((resolve, reject) => {
   const newOTP = generateOTP();
-  model.verifyMobile(mobile)  
-    .then((user) => model.setOTP(mobile, newOTP))
-    .then((e) => console.log(e))
+  model.verifyMobile(mobile)
+    .then((user) => {
+      if (user) {
+        return model.setOTP(mobile, newOTP);
+      }
+      return model.createuserAndSendOTP(mobile, newOTP);
+    })
+    .then(() => resolve({ mobile, otp: newOTP }))
     .catch((e) => {
       reject(e);
     });

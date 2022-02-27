@@ -139,6 +139,10 @@ userSchema.statics.setOTP = function (mobile, otp) {
   return this.findOneAndUpdate({ mobile }, { $set: { otp } });
 };
 
+userSchema.statics.createuserAndSendOTP = function (mobile, otp) {
+  return this.create({ mobile, otp });
+};
+
 /**
  * @typedef User
  */

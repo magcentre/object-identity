@@ -99,21 +99,11 @@ const search = (req, res) => {
     });
 };
 
-const otpLogin = (req, res) => {
+const verifyMobile = (req, res) => {
   processor.verifyUserAndGenerateOTP(req.body.mobile)
     .then((e) => sendResult(e, 200, res, req))
     .catch((e) => {
       logger.error(e.message);
-      sendError(e.message, res, e.statusCode || 500, req);
-    });
-};
-
-const register = (req, res) => {
-  processor.verifyMobile(req.body.mobile)
-    .then((mobile) => processor)
-    .then((e) => sendResult(e, 200, res, req))
-    .catch((e) => {
-      logger.error(e);
       sendError(e.message, res, e.statusCode || 500, req);
     });
 };
@@ -126,6 +116,5 @@ module.exports = {
   updateProfile,
   id2object,
   search,
-  otpLogin,
-  register,
+  verifyMobile
 };
