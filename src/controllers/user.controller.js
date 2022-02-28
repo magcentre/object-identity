@@ -61,7 +61,7 @@ const getAccessToken = (req, res) => {
 const updateProfile = (req, res) => {
   const userBody = req.body;
 
-  processor.isEmailTaken(userBody.email, req.auth.sub)
+  processor.verifyEmail(userBody.email, req.auth.sub)
     .then(() => processor.updateProfile(req.auth.sub, req.body))
     .then(() => processor.getUserById(req.auth.sub))
     .then((e) => sendResult(e, 200, res, req))

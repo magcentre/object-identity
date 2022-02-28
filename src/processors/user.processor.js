@@ -2,21 +2,12 @@ const moment = require('moment');
 const jwt = require('jsonwebtoken');
 const utils = require('@magcentre/api-utils');
 const { getRichError } = require('@magcentre/response-helper');
+const logger = require('@magcentre/logger-helper');
 const { model } = require('../models/user.model');
 const token = require('../models/token.model');
 const config = require('../configuration/config');
 const { createBucket } = require('../constants');
 
-/**
- * Generate token
- * @param {string} email
- * @returns {Promise<User>}
- */
-const isEmailTaken = (email, excludeUserId) => model.isEmailTaken(email, excludeUserId)
-  .then((user) => {
-    if (user) throw getRichError('NotFound', 'Email already exists', { user }, null, 'error', null);
-    return user;
-  });
 
 /**
  * Check if account exists or not with provided email address
@@ -60,7 +51,14 @@ const createUser = (body) => {
     .then((newUser) => {
       user = newUser.toObject();
       return utils.connect(createBucket, 'POST', { bucketName: newUser._id.toHexString() });
-    }).then(() => user);
+    }).then(() => {
+      logger.info('User account created', {
+        user,
+      });
+      return user;
+    }).catch((err) => {
+      throw getRichError('System', 'Unable to create user account', { user }, err, 'error', null);
+    });
 };
 /**
  * Get user by id
@@ -69,14 +67,11 @@ const createUser = (body) => {
  */
 const getUserById = (id) => model.findById(id, { password: 0 });
 
-/**
- * Get user by email
- * @param {string} email
- * @returns {Promise<User>}
- */
-const getUserByEmail = (email) => model.findOne({ email });
-
 const verifyEmailAndPassword = (email, password) => model.getUserByEmail(email)
+  .then((user) => {
+    if (!user) throw getRichError('NotFound', 'Invalid email', { email }, null, 'error', null);
+    return user;
+  })
   .then((user) => user.isPasswordMatch(password));
 
 /**
@@ -85,14 +80,10 @@ const verifyEmailAndPassword = (email, password) => model.getUserByEmail(email)
  * @param {string} type
  * @returns {Promise<Token>}
  */
-const verifyToken = (refreshToken) => new Promise((resolve, reject) => {
-  utils.verifyJWTToken(refreshToken, config.jwt.secret)
-    .then((decoded) => token.model.findToken({
-      token: refreshToken, type: token.types.REFRESH, user: decoded.sub, blacklisted: false,
-    }))
-    .then((tokenResponse) => resolve(tokenResponse))
-    .catch((err) => reject(err));
-});
+const verifyToken = (refreshToken) => utils.verifyJWTToken(refreshToken, config.jwt.secret)
+  .then((decoded) => token.model.findToken({
+    token: refreshToken, type: token.types.REFRESH, user: decoded.sub, blacklisted: false,
+  }));
 
 /**
  * Generate auth tokens
@@ -119,28 +110,24 @@ const generateAndSaveAuthToken = (user) => {
   const refreshToken = generateToken(user._id, refreshTokenExpires, token.types.REFRESH);
 
   // return promise and store token in database
-  return new Promise((resolve, reject) => {
-    token.model.createToken({
-      token: refreshToken,
-      user: user._id,
-      expires: refreshTokenExpires.toDate(),
-      type: token.types.REFRESH,
-      blacklisted: false,
-    }, (err, newToken) => {
-      if (err) return reject(err);
-      return resolve({
-        ...user,
-        access: {
-          token: accessToken,
-          expires: accessTokenExpires.toDate(),
-        },
-        refresh: {
-          token: newToken.token,
-          expires: refreshTokenExpires.toDate(),
-        },
-      });
-    });
-  });
+  return token.model.createToken({
+    token: refreshToken,
+    user: user._id,
+    expires: refreshTokenExpires.toDate(),
+    type: token.types.REFRESH,
+    blacklisted: false,
+  })
+    .then((newToken) => ({
+      ...user,
+      access: {
+        token: accessToken,
+        expires: accessTokenExpires.toDate(),
+      },
+      refresh: {
+        token: newToken.token,
+        expires: refreshTokenExpires.toDate(),
+      },
+    }));
 };
 
 /**
@@ -170,12 +157,10 @@ const search = (q) => model.find({ $or: [{ firstName: { $regex: q } }, { lastNam
 const createUserBucket = (bucketName) => utils.connect(createBucket, 'POST', { bucketName });
 
 module.exports = {
-  isEmailTaken,
   verifyEmailAndPassword,
   verifyEmail,
   createUser,
   getUserById,
-  getUserByEmail,
   generateAndSaveAuthToken,
   verifyToken,
   updateProfile,

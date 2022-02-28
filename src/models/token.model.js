@@ -45,8 +45,8 @@ const tokenSchema = mongoose.Schema(
  * @param {function(err, model)} cb - Callback function
  * @returns {Promise<Token>} -
  */
-tokenSchema.statics.createToken = function (tokenConfig, cb) {
-  this.create(tokenConfig, cb);
+tokenSchema.statics.createToken = function (tokenConfig) {
+  return this.create(tokenConfig);
 };
 
 /**
