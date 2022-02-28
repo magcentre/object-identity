@@ -8,7 +8,6 @@ const token = require('../models/token.model');
 const config = require('../configuration/config');
 const { createBucket } = require('../constants');
 
-
 /**
  * Check if account exists or not with provided email address
  * @param {string} email
@@ -81,9 +80,16 @@ const verifyEmailAndPassword = (email, password) => model.getUserByEmail(email)
  * @returns {Promise<Token>}
  */
 const verifyToken = (refreshToken) => utils.verifyJWTToken(refreshToken, config.jwt.secret)
+  .catch((err) => {
+    throw getRichError('UnAuthorized', 'Failed to verify refresh token', { err }, null, 'error', null);
+  })
   .then((decoded) => token.model.findToken({
     token: refreshToken, type: token.types.REFRESH, user: decoded.sub, blacklisted: false,
-  }));
+  }))
+  .then((oldToken) => {
+    if (!oldToken) throw getRichError('UnAuthorized', 'Not a valid refresh token', { oldToken }, null, 'error', null);
+    return oldToken.remove();
+  });
 
 /**
  * Generate auth tokens

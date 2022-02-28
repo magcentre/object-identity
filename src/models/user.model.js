@@ -126,7 +126,7 @@ UserAccount.updateProfile = (id, params) => UserAccount.findByIdAndUpdate(id, { 
  */
 UserAccount.getUserByEmail = (email) => UserAccount.findOne({ email })
   .catch((err) => {
-    throw getRichError('System', 'error while finding and updateing the profile with mongo id', { id, params }, err, 'error', null);
+    throw getRichError('System', 'error while finding and updateing the profile with mongo id', { err }, err, 'error', null);
   });
 
 module.exports = {

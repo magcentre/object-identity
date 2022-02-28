@@ -42,10 +42,6 @@ const getProfile = (req, res) => {
 const getAccessToken = (req, res) => {
   processor.verifyToken(req.body.refresh)
     .then((token) => {
-      if (!token) throw new Error({ statusCode: 401, message: 'Not a valid refresh token' });
-      return token.remove();
-    })
-    .then((token) => {
       const { user } = token;
       return processor.generateAndSaveAuthToken({
         _id: user,
