@@ -11,7 +11,7 @@ const create = (req, res) => {
     .then(() => processor.createUser(userBody, req.headers))
     .then((user) => sendResult(user, 200, res, req))
     .catch((err) => {
-      logger.error(err.message);
+      logger.error(err);
       sendError(err, res, err.statusCode || 500, req);
     });
 };

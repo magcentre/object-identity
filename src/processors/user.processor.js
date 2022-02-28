@@ -1,6 +1,7 @@
 const moment = require('moment');
 const jwt = require('jsonwebtoken');
 const utils = require('@magcentre/api-utils');
+const { getRichError } = require('@magcentre/response-helper');
 const { model } = require('../models/user.model');
 const token = require('../models/token.model');
 const config = require('../configuration/config');
@@ -11,28 +12,22 @@ const { createBucket } = require('../constants');
  * @param {string} email
  * @returns {Promise<User>}
  */
-const isEmailTaken = (email, excludeUserId) => new Promise((resolve, reject) => {
-  model.isEmailTaken(email, excludeUserId)
-    .then((e) => {
-      if (e) reject(new Error('Email already exists'));
-      resolve(true);
-    })
-    .catch((err) => reject(err));
-});
+const isEmailTaken = (email, excludeUserId) => model.isEmailTaken(email, excludeUserId)
+  .then((user) => {
+    if (user) throw getRichError('NotFound', 'Email already exists', { user }, null, 'error', null);
+    return user;
+  });
 
 /**
  * Check if account exists or not with provided email address
  * @param {string} email
  * @returns {Promise<User>}
  */
-const verifyEmail = (email, excludeUserId) => new Promise((resolve, reject) => {
-  model.isEmailTaken(email, excludeUserId)
-    .then((e) => {
-      if (e) reject(new Error('Email already exists'));
-      resolve(true);
-    })
-    .catch((err) => reject(err));
-});
+const verifyEmail = (email, excludeUserId) => model.isEmailTaken(email, excludeUserId)
+  .then((user) => {
+    if (user) throw getRichError('NotFound', 'Email already exists', { user }, null, 'error', null);
+    return user;
+  });
 
 /**
  * Generate token
@@ -59,16 +54,14 @@ const generateToken = (userId, expires, type, secret = config.jwt.secret) => {
  * @param {Object} userBody
  * @returns {Promise<User>}
  */
-const createUser = (body) => new Promise((resolve, reject) => {
+const createUser = (body) => {
   let user = {};
-  model.create(body)
+  return model.create(body)
     .then((newUser) => {
       user = newUser.toObject();
       return utils.connect(createBucket, 'POST', { bucketName: newUser._id.toHexString() });
-    })
-    .then(() => resolve(user))
-    .catch((e) => reject(e));
-});
+    }).then(() => user);
+};
 /**
  * Get user by id
  * @param {ObjectId} id
@@ -83,12 +76,8 @@ const getUserById = (id) => model.findById(id, { password: 0 });
  */
 const getUserByEmail = (email) => model.findOne({ email });
 
-const verifyEmailAndPassword = (email, password) => new Promise((resolve, reject) => {
-  model.getUserByEmail(email)
-    .then((user) => user.isPasswordMatch(password))
-    .then((user) => resolve(user))
-    .catch((err) => reject(err));
-});
+const verifyEmailAndPassword = (email, password) => model.getUserByEmail(email)
+  .then((user) => user.isPasswordMatch(password));
 
 /**
  * Verify token and return token doc (or throw an error if it is not valid)
