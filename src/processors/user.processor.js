@@ -202,6 +202,7 @@ const isNewRegistration = (user) => new Promise((resolve, reject) => {
   }
   model.updateProfile(user._id, { isVerified: true })
     .then(() => createUserBucket(user._id))
+    .then(() => updateProfile(user._id, { isVerified: true }))
     .then(() => {
       delete user.isVerified;
       resolve(user);
