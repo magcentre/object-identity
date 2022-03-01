@@ -197,7 +197,7 @@ const id2object = (ids, display) => model.findUserAccounts({ _id: { $in: ids } }
  * * @param {List<String>} display display parameters
  * @returns {Promise<List<User>>}
  */
-const search = (q) => model.find({ $or: [{ firstName: { $regex: q } }, { lastName: { $regex: q } }] }, { firstName: 1, lastName: 1, email: 1 });
+const search = (q) => model.searchUserAccounts(q);
 
 module.exports = {
   authenticate,

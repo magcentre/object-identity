@@ -177,6 +177,17 @@ UserAccount.findUserAccounts = (ids, display) => UserAccount.find({ _id: { $in: 
   .catch((err) => {
     throw getRichError('System', 'error while finding users with id', { err, ids, display }, err, 'error', null);
   });
+
+/**
+ * search user with text
+ * @param {String}  q - objects to be displayed
+ * @returns {Promise<User>}
+ */
+UserAccount.searchUserAccounts = (q) => UserAccount.find({ $or: [{ firstName: { $regex: q } }, { lastName: { $regex: q } }] }, { firstName: 1, lastName: 1, email: 1 })
+  .catch((err) => {
+    throw getRichError('System', 'error while searching users with query', { err, q }, err, 'error', null);
+  });
+
 module.exports = {
   model: UserAccount,
   types: userTypes,
