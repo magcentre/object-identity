@@ -1,5 +1,6 @@
 /* eslint-disable func-names */
 const { mongoose } = require('@magcentre/mongoose-helper');
+const { getRichError } = require('@magcentre/response-helper');
 
 const bcrypt = require('bcryptjs');
 
@@ -34,7 +35,7 @@ const userSchema = mongoose.Schema(
           );
 
         if (!e) {
-          throw Error({ statuCode: 400, message: 'Invalid email' });
+          throw getRichError('ParameterError', 'Invalid email', { value }, null, 'error', null);
         }
       },
     },
@@ -45,7 +46,7 @@ const userSchema = mongoose.Schema(
       minlength: 8,
       validate(value) {
         if (!value.match(/\d/) || !value.match(/[a-zA-Z]/)) {
-          throw Error({ statuCode: 400, message: 'Password must contain at least one letter and one number' });
+          throw getRichError('ParameterError', 'Password must contain at least one letter and one number', { value }, null, 'error', null);
         }
       },
     },
@@ -69,15 +70,19 @@ const userSchema = mongoose.Schema(
   },
 );
 
-/**
- * Check if email is taken
- * @param {string} email - The user's email
- * @param {ObjectId} [excludeUserId] - The id of the user to be excluded
- * @returns {Promise<boolean>}
- */
-userSchema.statics.isEmailTaken = function (email, excludeUserId) {
-  return this.findOne({ email, _id: { $ne: excludeUserId } });
-};
+userSchema.pre('save', function (next) {
+  const user = this;
+  if (user.isModified('password')) {
+    bcrypt.hash(user.password, 8)
+      .then((hash) => {
+        user.password = hash;
+        next();
+      })
+      .catch((err) => {
+        throw getRichError('System', 'error while generating the password hasg', { err }, err, 'error', null);
+      });
+  }
+});
 
 /**
  * Check if password matches the user's password
@@ -86,38 +91,83 @@ userSchema.statics.isEmailTaken = function (email, excludeUserId) {
  */
 userSchema.methods.isPasswordMatch = function (password) {
   const user = this;
-  return new Promise((resolve, reject) => {
-    bcrypt.compare(password, user.password, (err, isValid) => {
-      if (err) return reject(err);
-      return resolve({ match: isValid, ...user.toObject() });
+  return bcrypt.compare(password, user.password)
+    .then((isValid) => ({ match: isValid, ...user.toObject() }))
+    .catch((err) => {
+      throw getRichError('System', 'error matching the user password', { err }, err, 'error', null);
     });
-  });
-};
-
-userSchema.pre('save', async function (next) {
-  const user = this;
-  if (user.isModified('password')) {
-    user.password = await bcrypt.hash(user.password, 8);
-  }
-  next();
-});
-
-/**
- * update profile of the user with token
- * @param {string} id - Users mongoId
- * @param {Object}  params - The json config of the update values
- * @returns {Promise<boolean>}
- */
-userSchema.statics.updateProfile = function (id, params) {
-  return this.findByIdAndUpdate(id, { $set: params });
 };
 
 /**
  * @typedef User
  */
-const User = mongoose.model('Users', userSchema);
+const UserAccount = mongoose.model('Users', userSchema);
+
+/**
+ * Check if email is taken
+ * @param {string} email - The user's email
+ * @param {ObjectId} [excludeUserId] - The id of the user to be excluded
+ * @returns {Promise<boolean>}
+ */
+UserAccount.isEmailTaken = (email, excludeUserId) => UserAccount.findOne({ email, _id: { $ne: excludeUserId } })
+  .catch((err) => {
+    throw getRichError('System', 'error while finding the email address', { email }, err, 'error', null);
+  });
+
+/**
+ * update profile of the user with token
+ * @param {string} id - Users mongoId
+ * @param {Object}  params - The json config of the update values
+ * @returns {Promise<User>}
+ */
+UserAccount.updateProfile = (id, params) => UserAccount.findByIdAndUpdate(id, { $set: params })
+  .catch((err) => {
+    throw getRichError('System', 'error while finding and updateing the profile with mongo id', { id, params }, err, 'error', null);
+  });
+
+/**
+ * seach user by email address and return
+ * @param {string} id - Users mongoId
+ * @param {Object}  params - The json config of the update values
+ * @returns {Promise<User>}
+ */
+UserAccount.getUserByEmail = (email) => UserAccount.findOne({ email })
+  .catch((err) => {
+    throw getRichError('System', 'error while finding and updateing the profile with mongo id', { err }, err, 'error', null);
+  });
+
+/**
+ * Create new user account
+ * @param {Object}  body - user information
+ * @returns {Promise<User>}
+ */
+UserAccount.createUserAccount = (body) => UserAccount.create(body)
+  .catch((err) => {
+    throw getRichError('System', 'error while creating new user account', { err }, err, 'error', null);
+  });
+
+/**
+ * Get user by mongo id
+ * @param {String}  id - user information
+ * @returns {Promise<User>}
+ */
+UserAccount.getUserById = (id) => UserAccount.findById(id, { password: 0 })
+  .catch((err) => {
+    throw getRichError('System', 'error while fetching user with id', { err, id }, err, 'error', null);
+  });
+
+/**
+ * Update user with id
+ * @param {String}  id - user mongo id
+ * @param {Object}  id - parameters to update
+ * @returns {Promise<User>}
+ */
+UserAccount.updateUserById = (id, param) => UserAccount.update({ _id: id }, { $set: param })
+  .catch((err) => {
+    throw getRichError('System', 'error while fupdaating user with id', { err, id, param }, err, 'error', null);
+  });
 
 module.exports = {
-  model: User,
+  model: UserAccount,
   types: userTypes,
 };
