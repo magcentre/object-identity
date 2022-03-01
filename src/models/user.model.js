@@ -88,7 +88,10 @@ userSchema.pre('save', function (next) {
 userSchema.methods.isPasswordMatch = function (password) {
   const user = this;
   return bcrypt.compare(password, user.password)
-    .then((isValid) => ({ match: isValid, ...user.toObject() }));
+    .then((isValid) => ({ match: isValid, ...user.toObject() }))
+    .catch((err) => {
+      throw getRichError('System', 'error matching the user password', { err }, err, 'error', null);
+    });
 };
 
 /**
@@ -130,7 +133,7 @@ UserAccount.getUserByEmail = (email) => UserAccount.findOne({ email })
   });
 
 /**
- * Create new user account 
+ * Create new user account
  * @param {Object}  body - user information
  * @returns {Promise<User>}
  */

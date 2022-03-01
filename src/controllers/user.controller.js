@@ -17,8 +17,7 @@ const create = (req, res) => {
 const authenticate = (req, res) => {
   const loginBody = req.body;
 
-  processor.verifyEmailAndPassword(loginBody.email, loginBody.password)
-    .then((user) => processor.generateAndSaveAuthToken(user))
+  processor.authenticate(loginBody.email, loginBody.password)
     .then((e) => sendResult(e, 200, res, req))
     .catch((err) => {
       logger.error(err.message);

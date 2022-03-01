@@ -39,6 +39,8 @@ const generateToken = (userId, expires, type, secret = config.jwt.secret) => {
   return jwt.sign(payload, secret);
 };
 
+const createUserBucket = (bucketName) => utils.connect(createBucket, 'POST', { bucketName });
+
 /**
  * Create a user
  * Verify email address before creating the account
@@ -69,31 +71,6 @@ const createUser = (body) => {
  * @returns {Promise<User>}
  */
 const getUserById = (id) => model.findById(id, { password: 0 });
-
-const verifyEmailAndPassword = (email, password) => model.getUserByEmail(email)
-  .then((user) => {
-    if (!user) throw getRichError('NotFound', 'Invalid email', { email }, null, 'error', null);
-    return user;
-  })
-  .then((user) => user.isPasswordMatch(password));
-
-/**
- * Verify token and return token doc (or throw an error if it is not valid)
- * @param {string} token
- * @param {string} type
- * @returns {Promise<Token>}
- */
-const verifyToken = (refreshToken) => utils.verifyJWTToken(refreshToken, config.jwt.secret)
-  .catch((err) => {
-    throw getRichError('UnAuthorized', 'Failed to verify refresh token', { err }, null, 'error', null);
-  })
-  .then((decoded) => token.model.findToken({
-    token: refreshToken, type: token.types.REFRESH, user: decoded.sub, blacklisted: false,
-  }))
-  .then((oldToken) => {
-    if (!oldToken) throw getRichError('UnAuthorized', 'Not a valid refresh token', { oldToken }, null, 'error', null);
-    return oldToken.remove();
-  });
 
 /**
  * Generate auth tokens
@@ -140,6 +117,36 @@ const generateAndSaveAuthToken = (user) => {
     }));
 };
 
+const authenticate = (email, password) => model.getUserByEmail(email)
+  .then((user) => {
+    if (!user) throw getRichError('ParameterError', 'Invalid email', { email }, null, 'error', null);
+    return user;
+  })
+  .then((user) => user.isPasswordMatch(password))
+  .then((userWithPassword) => {
+    if (!userWithPassword.match) throw getRichError('ParameterError', 'Invalid password', { match: userWithPassword.match }, null, 'error', null);
+    return userWithPassword;
+  })
+  .then((user) => generateAndSaveAuthToken(user));
+
+/**
+ * Verify token and return token doc (or throw an error if it is not valid)
+ * @param {string} token
+ * @param {string} type
+ * @returns {Promise<Token>}
+ */
+const verifyToken = (refreshToken) => utils.verifyJWTToken(refreshToken, config.jwt.secret)
+  .catch((err) => {
+    throw getRichError('UnAuthorized', 'Failed to verify refresh token', { err }, null, 'error', null);
+  })
+  .then((decoded) => token.model.findToken({
+    token: refreshToken, type: token.types.REFRESH, user: decoded.sub, blacklisted: false,
+  }))
+  .then((oldToken) => {
+    if (!oldToken) throw getRichError('UnAuthorized', 'Not a valid refresh token', { oldToken }, null, 'error', null);
+    return oldToken.remove();
+  });
+
 /**
  * Update the user profile
  * @param {string} id user id
@@ -164,10 +171,8 @@ const id2object = (ids, display) => model.find({ _id: { $in: ids } }, display);
  */
 const search = (q) => model.find({ $or: [{ firstName: { $regex: q } }, { lastName: { $regex: q } }] }, { firstName: 1, lastName: 1, email: 1 });
 
-const createUserBucket = (bucketName) => utils.connect(createBucket, 'POST', { bucketName });
-
 module.exports = {
-  verifyEmailAndPassword,
+  authenticate,
   verifyEmail,
   createUser,
   getUserById,
