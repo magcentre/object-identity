@@ -39,6 +39,11 @@ const generateToken = (userId, expires, type, secret = config.jwt.secret) => {
   return jwt.sign(payload, secret);
 };
 
+/**
+ * Create a new bucket with provided bucket name
+ * @param {String} bucketName bucketName to be created
+ * @returns Axios response
+ */
 const createUserBucket = (bucketName) => utils.connect(createBucket, 'POST', { bucketName });
 
 /**
@@ -117,6 +122,16 @@ const generateAndSaveAuthToken = (user) => {
     }));
 };
 
+/**
+ * Authenticate user with email and password
+ * verify email address if exists
+ * match provided password and registered password
+ * generate the access token and refresh token
+ * @param {String} email Registered email address
+ * @param {String} password Password
+ * @returns User
+ */
+
 const authenticate = (email, password) => model.getUserByEmail(email)
   .then((user) => {
     if (!user) throw getRichError('ParameterError', 'Invalid email', { email }, null, 'error', null);
@@ -157,11 +172,16 @@ const getAccessToken = (refreshToken) => utils.verifyJWTToken(refreshToken, conf
 
 /**
  * Update the user profile
+ * verify email if email is getting updated
+ * update user profile into db
+ * fetch updated information and return
  * @param {string} id user id
  * @param {string} param json object of field and values to be updated
  * @returns {Promise<Token>}
  */
-const updateProfile = (id, param) => model.update({ _id: id }, { $set: param });
+const updateProfile = (email, id, param) => verifyEmail(email, [id])
+  .then(() => model.updateUserById(id, param))
+  .then(() => getUserById(id));
 
 /**
  * Convert list of userIds into objects

@@ -48,9 +48,7 @@ const getAccessToken = (req, res) => {
 const updateProfile = (req, res) => {
   const userBody = req.body;
 
-  processor.verifyEmail(userBody.email, req.auth.sub)
-    .then(() => processor.updateProfile(req.auth.sub, req.body))
-    .then(() => processor.getUserById(req.auth.sub))
+  processor.updateProfile(userBody.email, req.auth.sub, req.body)
     .then((e) => sendResult(e, 200, res, req))
     .catch((e) => {
       logger.error(e);

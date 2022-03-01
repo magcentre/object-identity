@@ -73,10 +73,14 @@ const userSchema = mongoose.Schema(
 userSchema.pre('save', function (next) {
   const user = this;
   if (user.isModified('password')) {
-    bcrypt.hash(user.password, 8).then((hash) => {
-      user.password = hash;
-      next();
-    });
+    bcrypt.hash(user.password, 8)
+      .then((hash) => {
+        user.password = hash;
+        next();
+      })
+      .catch((err) => {
+        throw getRichError('System', 'error while generating the password hasg', { err }, err, 'error', null);
+      });
   }
 });
 
@@ -150,6 +154,17 @@ UserAccount.createUserAccount = (body) => UserAccount.create(body)
 UserAccount.getUserById = (id) => UserAccount.findById(id, { password: 0 })
   .catch((err) => {
     throw getRichError('System', 'error while fetching user with id', { err, id }, err, 'error', null);
+  });
+
+/**
+ * Update user with id
+ * @param {String}  id - user mongo id
+ * @param {Object}  id - parameters to update
+ * @returns {Promise<User>}
+ */
+UserAccount.updateUserById = (id, param) => UserAccount.update({ _id: id }, { $set: param })
+  .catch((err) => {
+    throw getRichError('System', 'error while fupdaating user with id', { err, id, param }, err, 'error', null);
   });
 
 module.exports = {
