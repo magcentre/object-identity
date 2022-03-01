@@ -1,4 +1,3 @@
-
 const si = require('systeminformation');
 
 const getSystemInfo = () => si.cpu();

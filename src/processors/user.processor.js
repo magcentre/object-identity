@@ -189,7 +189,7 @@ const updateProfile = (email, id, param) => verifyEmail(email, [id])
  * * @param {List<String>} display display parameters
  * @returns {Promise<List<User>>}
  */
-const id2object = (ids, display) => model.find({ _id: { $in: ids } }, display);
+const id2object = (ids, display) => model.findUserAccounts({ _id: { $in: ids } }, display);
 
 /**
  * Convert list of userIds into objects
@@ -197,7 +197,7 @@ const id2object = (ids, display) => model.find({ _id: { $in: ids } }, display);
  * * @param {List<String>} display display parameters
  * @returns {Promise<List<User>>}
  */
-const search = (q) => model.find({ $or: [{ firstName: { $regex: q } }, { lastName: { $regex: q } }] }, { firstName: 1, lastName: 1, email: 1 });
+const search = (q) => model.searchUserAccounts(q);
 
 module.exports = {
   authenticate,
