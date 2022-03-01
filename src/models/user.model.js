@@ -142,6 +142,16 @@ UserAccount.createUserAccount = (body) => UserAccount.create(body)
     throw getRichError('System', 'error while creating new user account', { err }, err, 'error', null);
   });
 
+/**
+ * Get user by mongo id
+ * @param {String}  id - user information
+ * @returns {Promise<User>}
+ */
+UserAccount.getUserById = (id) => UserAccount.findById(id, { password: 0 })
+  .catch((err) => {
+    throw getRichError('System', 'error while fetching user with id', { err, id }, err, 'error', null);
+  });
+
 module.exports = {
   model: UserAccount,
   types: userTypes,

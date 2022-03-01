@@ -70,7 +70,7 @@ const createUser = (body) => {
  * @param {ObjectId} id
  * @returns {Promise<User>}
  */
-const getUserById = (id) => model.findById(id, { password: 0 });
+const getUserById = (id) => model.getUserById(id);
 
 /**
  * Generate auth tokens
