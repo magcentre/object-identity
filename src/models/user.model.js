@@ -164,9 +164,19 @@ UserAccount.getUserById = (id) => UserAccount.findById(id, { password: 0 })
  */
 UserAccount.updateUserById = (id, param) => UserAccount.update({ _id: id }, { $set: param })
   .catch((err) => {
-    throw getRichError('System', 'error while fupdaating user with id', { err, id, param }, err, 'error', null);
+    throw getRichError('System', 'error while updating user with id', { err, id, param }, err, 'error', null);
   });
 
+/**
+ * finding users with id
+ * @param {List<String>}  ids - list of user ids
+ * @param {Object}  display - objects to be displayed
+ * @returns {Promise<User>}
+ */
+UserAccount.findUserAccounts = (ids, display) => UserAccount.find({ _id: { $in: ids } }, display)
+  .catch((err) => {
+    throw getRichError('System', 'error while finding users with id', { err, ids, display }, err, 'error', null);
+  });
 module.exports = {
   model: UserAccount,
   types: userTypes,
