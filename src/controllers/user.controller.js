@@ -37,13 +37,7 @@ const getProfile = (req, res) => {
 };
 
 const getAccessToken = (req, res) => {
-  processor.verifyToken(req.body.refresh)
-    .then((token) => {
-      const { user } = token;
-      return processor.generateAndSaveAuthToken({
-        _id: user,
-      });
-    })
+  processor.getAccessToken(req.body.refresh)
     .then((e) => sendResult(e, 200, res, req))
     .catch((e) => {
       logger.error(e);

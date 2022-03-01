@@ -130,12 +130,14 @@ const authenticate = (email, password) => model.getUserByEmail(email)
   .then((user) => generateAndSaveAuthToken(user));
 
 /**
- * Verify token and return token doc (or throw an error if it is not valid)
+ * Verify Token
+ * Verify currently provided refresh token
+ * delete existing token from the db
+ * create new refresh token and access token and store into database
  * @param {string} token
- * @param {string} type
  * @returns {Promise<Token>}
  */
-const verifyToken = (refreshToken) => utils.verifyJWTToken(refreshToken, config.jwt.secret)
+const getAccessToken = (refreshToken) => utils.verifyJWTToken(refreshToken, config.jwt.secret)
   .catch((err) => {
     throw getRichError('UnAuthorized', 'Failed to verify refresh token', { err }, null, 'error', null);
   })
@@ -145,6 +147,12 @@ const verifyToken = (refreshToken) => utils.verifyJWTToken(refreshToken, config.
   .then((oldToken) => {
     if (!oldToken) throw getRichError('UnAuthorized', 'Not a valid refresh token', { oldToken }, null, 'error', null);
     return oldToken.remove();
+  })
+  .then((oldToken) => {
+    const { user } = oldToken;
+    return generateAndSaveAuthToken({
+      _id: user,
+    });
   });
 
 /**
@@ -177,7 +185,7 @@ module.exports = {
   createUser,
   getUserById,
   generateAndSaveAuthToken,
-  verifyToken,
+  getAccessToken,
   updateProfile,
   id2object,
   search,
