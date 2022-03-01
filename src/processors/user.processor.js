@@ -15,7 +15,7 @@ const { createBucket } = require('../constants');
  */
 const verifyEmail = (email, excludeUserId) => model.isEmailTaken(email, excludeUserId)
   .then((user) => {
-    if (user) throw getRichError('NotFound', 'Email already exists', { user }, null, 'error', null);
+    if (user) throw getRichError('Parameter', 'Email already exists', { user }, null, 'error', null);
     return user;
   });
 
@@ -41,24 +41,28 @@ const generateToken = (userId, expires, type, secret = config.jwt.secret) => {
 
 /**
  * Create a user
+ * Verify email address before creating the account
+ * Once the email is verified, the new account entry will be created
+ * Account creation is completed followed by the bucket creation for newly created account
  * @param {Object} userBody
  * @returns {Promise<User>}
  */
 const createUser = (body) => {
   let user = {};
-  return model.create(body)
+  return verifyEmail(body.email)
+    .then(() => model.createUserAccount(body))
     .then((newUser) => {
       user = newUser.toObject();
       return utils.connect(createBucket, 'POST', { bucketName: newUser._id.toHexString() });
-    }).then(() => {
+    })
+    .then(() => {
       logger.info('User account created', {
         user,
       });
       return user;
-    }).catch((err) => {
-      throw getRichError('System', 'Unable to create user account', { user }, err, 'error', null);
     });
 };
+
 /**
  * Get user by id
  * @param {ObjectId} id

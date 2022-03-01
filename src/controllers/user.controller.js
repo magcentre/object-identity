@@ -6,9 +6,7 @@ const processor = require('../processors/user.processor');
 
 const create = (req, res) => {
   const userBody = req.body;
-  processor
-    .verifyEmail(userBody.email)
-    .then(() => processor.createUser(userBody, req.headers))
+  processor.createUser(userBody, req.headers)
     .then((user) => sendResult(user, 200, res, req))
     .catch((err) => {
       logger.error(err);

@@ -129,6 +129,16 @@ UserAccount.getUserByEmail = (email) => UserAccount.findOne({ email })
     throw getRichError('System', 'error while finding and updateing the profile with mongo id', { err }, err, 'error', null);
   });
 
+/**
+ * Create new user account 
+ * @param {Object}  body - user information
+ * @returns {Promise<User>}
+ */
+UserAccount.createUserAccount = (body) => UserAccount.create(body)
+  .catch((err) => {
+    throw getRichError('System', 'error while creating new user account', { err }, err, 'error', null);
+  });
+
 module.exports = {
   model: UserAccount,
   types: userTypes,

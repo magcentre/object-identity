@@ -14,5 +14,4 @@ module.exports.jwt = (req, res, next) => {
       return next();
     })
     .catch((err) => sendError(err, res, err.statusCode || 500, req));
-  
 };
