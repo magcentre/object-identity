@@ -13,19 +13,14 @@ const userSchema = mongoose.Schema(
   {
     firstName: {
       type: String,
-      required: true,
       trim: true,
     },
     lastName: {
       type: String,
-      required: true,
       trim: true,
     },
     email: {
       type: String,
-      required: true,
-      unique: true,
-      trim: true,
       lowercase: true,
       validate(value) {
         const e = String(value)
@@ -41,7 +36,6 @@ const userSchema = mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
       trim: true,
       minlength: 8,
       validate(value) {
@@ -55,7 +49,25 @@ const userSchema = mongoose.Schema(
       enum: [userTypes.ADMIN, userTypes.USER],
       default: userTypes.USER,
     },
-    profile: {
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    mobile: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      validate(value) {
+        if (!value.match(/\d/) || !value.match(/^(?:(?:\+|0{0,2})91(\s*|[-])?|[0]?)?([6789]\d{2}([ -]?)\d{3}([ -]?)\d{4})$/)) {
+          throw getRichError('ParameterError', 'Enter valid mobile number', { value }, null, 'error', null);
+        }
+      },
+    },
+    otp: {
+      type: Number,
+    },
+    avatar: {
       type: String,
       trim: true,
     },
@@ -186,6 +198,48 @@ UserAccount.findUserAccounts = (ids, display) => UserAccount.find({ _id: { $in: 
 UserAccount.searchUserAccounts = (q) => UserAccount.find({ $or: [{ firstName: { $regex: q } }, { lastName: { $regex: q } }] }, { firstName: 1, lastName: 1, email: 1 })
   .catch((err) => {
     throw getRichError('System', 'error while searching users with query', { err, q }, err, 'error', null);
+  });
+
+/**
+ * verify mobile number, if mobile exists return the user object otherwise throw error
+ * @param {Number} mobile - Mobile number of registreed user
+ * @returns {Promise<boolean>}
+*/
+UserAccount.verifyMobile = (mobile) => UserAccount.findOne({ mobile })
+  .catch((err) => {
+    throw getRichError('System', 'error while finding user with mobile', { err, mobile }, err, 'error', null);
+  });
+/**
+ * Set newly generated OTP to the user to verify
+ * @param {String} mobile Mobile number of the registed user
+ * @param {String} otp OTP to set for the user
+ * @returns Promise
+ */
+UserAccount.setOTP = (mobile, otp) => UserAccount.findOneAndUpdate({ mobile }, { $set: { otp } })
+  .catch((err) => {
+    throw getRichError('System', 'error while finding user with mobile', { err, mobile }, err, 'error', null);
+  });
+
+/**
+ * Create user and set otp for the verification
+ * @param {String} mobile create new user with mobile
+ * @param {String} otp new otp to set for the user verification
+ * @returns Promise
+ */
+UserAccount.createuserAndSetOTP = (mobile, otp) => UserAccount.createUserAccount({ mobile, otp, isVerified: false })
+  .then((e) => console.log('ikade alla', e))
+  .catch((err) => {
+    throw getRichError('System', 'error while creating user with mobile', { err, mobile }, err, 'error', null);
+  });
+
+/**
+ * Find user by mobile number
+ * @param {String} mobile search user by mobile number
+ * @returns Promise
+ */
+UserAccount.getUserByMobile = (mobile) => UserAccount.findOne({ mobile })
+  .catch((err) => {
+    throw getRichError('System', 'error while finding user with mobile', { err, mobile }, err, 'error', null);
   });
 
 module.exports = {
