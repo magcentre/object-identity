@@ -1,34 +1,28 @@
 const { sendResult, sendError } = require('@magcentre/response-helper');
 
+const logger = require('@magcentre/logger-helper');
+
 const processor = require('../processors/user.processor');
 
 const create = (req, res) => {
   const userBody = req.body;
-
-  processor
-    .isEmailTaken(userBody.email)
-    .then((e) => {
-      if (e) throw new Error({ statusCode: 400, message: 'Email already exists' });
-      return processor.createUser(userBody);
-    })
-    .then((e) => sendResult(e, 200, res, req))
-    .catch((e) => sendError(e, res, e.statusCode || 500, req));
+  processor.createUser(userBody, req.headers)
+    .then((user) => sendResult(user, 200, res, req))
+    .catch((err) => {
+      logger.error(err);
+      sendError(err, res, err.statusCode || 500, req);
+    });
 };
 
 const authenticate = (req, res) => {
   const loginBody = req.body;
 
-  processor.getUserByEmail(loginBody.email)
-    .then((user) => {
-      if (user) return user.isPasswordMatch(loginBody.password);
-      throw new Error({ statusCode: 400, message: 'Incorrect email or password' });
-    })
-    .then((user) => {
-      if (user.match) return processor.generateAndSaveAuthToken(user);
-      throw new Error({ statusCode: 400, message: 'Incorrect email or password' });
-    })
+  processor.authenticate(loginBody.email, loginBody.password)
     .then((e) => sendResult(e, 200, res, req))
-    .catch((e) => sendError(e, res, e.statusCode || 500, req));
+    .catch((err) => {
+      logger.error(err.message);
+      sendError(err, res, err.statusCode || 500, req);
+    });
 };
 
 const getProfile = (req, res) => {
@@ -36,23 +30,48 @@ const getProfile = (req, res) => {
 
   processor.getUserById(userId)
     .then((e) => sendResult(e, 200, res, req))
-    .catch((e) => sendError(e, res, e.statusCode || 500, req));
+    .catch((e) => {
+      logger.error(e);
+      sendError(e, res, e.statusCode || 500, req);
+    });
 };
 
 const getAccessToken = (req, res) => {
-  processor.verifyToken(req.body.refresh)
-    .then((token) => {
-      if (!token) throw new Error({ statusCode: 401, message: 'Not a valid refresh token' });
-      return token.remove();
-    })
-    .then((token) => {
-      const { user } = token;
-      return processor.generateAndSaveAuthToken({
-        _id: user,
-      });
-    })
+  processor.getAccessToken(req.body.refresh)
     .then((e) => sendResult(e, 200, res, req))
-    .catch((e) => sendError(e, res, e.statusCode || 500, req));
+    .catch((e) => {
+      logger.error(e);
+      sendError(e, res, e.statusCode || 500, req);
+    });
+};
+
+const updateProfile = (req, res) => {
+  const userBody = req.body;
+
+  processor.updateProfile(userBody.email, req.auth.sub, req.body)
+    .then((e) => sendResult(e, 200, res, req))
+    .catch((e) => {
+      logger.error(e);
+      sendError(e.message, res, e.statusCode || 500, req);
+    });
+};
+
+const id2object = (req, res) => {
+  processor.id2object(req.body.ids, req.body.display)
+    .then((e) => sendResult(e, 200, res, req))
+    .catch((e) => {
+      logger.error(e);
+      sendError(e.message, res, e.statusCode || 500, req);
+    });
+};
+
+const search = (req, res) => {
+  processor.search(req.query.q)
+    .then((e) => sendResult(e, 200, res, req))
+    .catch((e) => {
+      logger.error(e);
+      sendError(e.message, res, e.statusCode || 500, req);
+    });
 };
 
 module.exports = {
@@ -60,4 +79,7 @@ module.exports = {
   authenticate,
   getProfile,
   getAccessToken,
+  updateProfile,
+  id2object,
+  search,
 };

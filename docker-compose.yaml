@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+
+  identity-db:
+    container_name: object-identity-db
+    image: mongo
+    restart: unless-stopped
+    environment:
+      - MONGO_INITDB_DATABASE=magcentre
+    networks:
+      - cloud-network
+    volumes:
+      - /home/prasanna/container-stroage/object-identity:/data/db
+
+  service:
+    container_name: object-identity-service
+    depends_on:
+      - identity-db
+    build: .
+    restart: unless-stopped
+    ports:
+      - 5004:5004
+    stdin_open: true
+    tty: true
+    networks:
+      - cloud-network
+
+networks:
+  cloud-network:
+    name: cloud-network
