@@ -208,6 +208,8 @@ paths:
                 type: string
               password:
                 type: string
+              fcm:
+                type: string
       responses:
         "200":
           description: Success

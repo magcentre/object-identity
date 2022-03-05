@@ -110,7 +110,7 @@ const generateAndSaveAuthToken = (user) => {
     blacklisted: false,
   })
     .then((newToken) => ({
-      ...user,
+      ...user.toObject(),
       access: {
         token: accessToken,
         expires: accessTokenExpires.toDate(),
@@ -132,7 +132,7 @@ const generateAndSaveAuthToken = (user) => {
  * @returns User
  */
 
-const authenticate = (email, password) => model.getUserByEmail(email)
+const authenticate = (email, password, fcmToken) => model.getUserByEmail(email)
   .then((user) => {
     if (!user) throw getRichError('ParameterError', 'Invalid email', { email }, null, 'error', null);
     return user;
@@ -142,6 +142,7 @@ const authenticate = (email, password) => model.getUserByEmail(email)
     if (!userWithPassword.match) throw getRichError('ParameterError', 'Invalid password', { match: userWithPassword.match }, null, 'error', null);
     return userWithPassword;
   })
+  .then((user) => model.updateProfile(user._id, { fcmToken }))
   .then((user) => generateAndSaveAuthToken(user));
 
 /**
