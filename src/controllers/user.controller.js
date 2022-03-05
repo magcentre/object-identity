@@ -17,7 +17,7 @@ const create = (req, res) => {
 const authenticate = (req, res) => {
   const loginBody = req.body;
 
-  processor.authenticate(loginBody.email, loginBody.password)
+  processor.authenticate(loginBody.email, loginBody.password, loginBody.fcm)
     .then((e) => sendResult(e, 200, res, req))
     .catch((err) => {
       logger.error(err.message);
