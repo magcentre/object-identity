@@ -19,3 +19,5 @@ initDatabase(config.database, path.join(__dirname, 'models'))
     logger.log(err);
     logger.error('Failed to start identity-service');
   });
+
+module.exports = app;
