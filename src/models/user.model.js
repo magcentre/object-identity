@@ -34,16 +34,6 @@ const userSchema = mongoose.Schema(
         }
       },
     },
-    password: {
-      type: String,
-      trim: true,
-      minlength: 8,
-      validate(value) {
-        if (!value.match(/\d/) || !value.match(/[a-zA-Z]/)) {
-          throw getRichError('ParameterError', 'Password must contain at least one letter and one number', { value }, null, 'error', null);
-        }
-      },
-    },
     role: {
       type: String,
       enum: [userTypes.ADMIN, userTypes.USER],
@@ -58,11 +48,6 @@ const userSchema = mongoose.Schema(
       required: true,
       unique: true,
       trim: true,
-      validate(value) {
-        if (!value.match(/\d/) || !value.match(/^(?:(?:\+|0{0,2})91(\s*|[-])?|[0]?)?([6789]\d{2}([ -]?)\d{3}([ -]?)\d{4})$/)) {
-          throw getRichError('ParameterError', 'Enter valid mobile number', { value }, null, 'error', null);
-        }
-      },
     },
     otp: {
       type: Number,
@@ -81,20 +66,6 @@ const userSchema = mongoose.Schema(
     versionKey: false,
   },
 );
-
-userSchema.pre('save', function (next) {
-  const user = this;
-  if (user.isModified('password')) {
-    bcrypt.hash(user.password, 8)
-      .then((hash) => {
-        user.password = hash;
-        next();
-      })
-      .catch((err) => {
-        throw getRichError('System', 'error while generating the password hasg', { err }, err, 'error', null);
-      });
-  }
-});
 
 /**
  * Check if password matches the user's password
@@ -218,18 +189,6 @@ UserAccount.verifyMobile = (mobile) => UserAccount.findOne({ mobile })
 UserAccount.setOTP = (mobile, otp) => UserAccount.findOneAndUpdate({ mobile }, { $set: { otp } })
   .catch((err) => {
     throw getRichError('System', 'error while finding user with mobile', { err, mobile }, err, 'error', null);
-  });
-
-/**
- * Create user and set otp for the verification
- * @param {String} mobile create new user with mobile
- * @param {String} otp new otp to set for the user verification
- * @returns Promise
- */
-UserAccount.createuserAndSetOTP = (mobile, otp) => UserAccount.createUserAccount({ mobile, otp, isVerified: false })
-  .then((e) => console.log('ikade alla', e))
-  .catch((err) => {
-    throw getRichError('System', 'error while creating user with mobile', { err, mobile }, err, 'error', null);
   });
 
 /**

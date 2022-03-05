@@ -75,7 +75,6 @@ const search = (req, res) => {
 };
 
 const sendOTP = (req, res) => {
-  console.log("Sending OTP");
   processor.verifyUserAndGenerateOTP(req.body.mobile)
     .then((e) => sendResult(e, 200, res, req))
     .catch((e) => {

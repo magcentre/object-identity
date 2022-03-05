@@ -6,7 +6,7 @@ const logger = require('@magcentre/logger-helper');
 const { model } = require('../models/user.model');
 const token = require('../models/token.model');
 const config = require('../configuration/config');
-const { createBucket } = require('../constants');
+const { createBucket, sendOTP, otpTemplate } = require('../constants');
 
 /**
  * Check if account exists or not with provided email address
@@ -206,25 +206,6 @@ const search = (q) => model.searchUserAccounts(q);
 const generateOTP = () => Math.floor(Math.random() * 899999 + 100000);
 
 /**
- * Generate OTP for verification
- * if the user does not exists with the provided mobile nubmer
- * new user is created otherwise OTP is set for existsing user
- * @param {String} mobile Mobile number to verify and generate otp
- * @returns Promise
- */
-const verifyUserAndGenerateOTP = (mobile) => {
-  const newOTP = generateOTP();
-  return model.verifyMobile(mobile)
-    .then((user) => {
-      console.log("Email verification done", user);
-      if (user) return model.setOTP(mobile, newOTP);
-      return model.createuserAndSetOTP(mobile, newOTP);
-    })
-    .then(() => ({ mobile, otp: newOTP }))
-    .catch((e) => console.log(e));
-};
-
-/**
  * Check if account exists or not with provided mobile number
  * @param {string} mobile mobiler number to verify if exists or not
  * @returns {Promise<User>}
@@ -267,6 +248,26 @@ const isNewRegistration = (user) => {
 };
 
 /**
+ * Generate OTP for verification
+ * if the user does not exists with the provided mobile nubmer
+ * new user is created otherwise OTP is set for existsing user
+ * @param {String} mobile Mobile number to verify and generate otp
+ * @returns Promise
+ */
+const verifyUserAndGenerateOTP = (mobile) => {
+  const otp = generateOTP();
+  return model.verifyMobile(mobile)
+    .then((user) => {
+      if (user) return model.setOTP(mobile, otp);
+      return model.createUserAccount({
+        mobile, otp,
+      });
+    })
+    .then(() => utils.connect(sendOTP, 'POST', { to: [mobile], content: otpTemplate(otp) }))
+    .then(() => ({ mobile, otp }));
+};
+
+/**
  * Verify OTP and user account
  * @param {String} mobile mobile number to be verified
  * @param {String} otp OTP to verify with the mobile number
@@ -275,7 +276,7 @@ const isNewRegistration = (user) => {
 const verifyOTPAndUserAccount = (mobile, otp) => verifyOtp(mobile, otp)
   .then((user) => isNewRegistration(user))
   .then((user) => generateAndSaveAuthToken(user.toObject()))
-  .catch((err) => console.log("Ikeade alla error la "));
+  .catch((user) => getRichError('System', 'error while verifying user otp', { user }, null, 'error', null));
 
 module.exports = {
   authenticate,
