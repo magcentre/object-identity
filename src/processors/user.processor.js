@@ -6,7 +6,7 @@ const logger = require('@magcentre/logger-helper');
 const { model } = require('../models/user.model');
 const token = require('../models/token.model');
 const config = require('../configuration/config');
-const { createBucket } = require('../constants');
+const { createBucket, sendOTP, otpTemplate } = require('../constants');
 
 /**
  * Check if account exists or not with provided email address
@@ -190,7 +190,7 @@ const updateProfile = (email, id, param) => verifyEmail(email, [id])
  * * @param {List<String>} display display parameters
  * @returns {Promise<List<User>>}
  */
-const id2object = (ids, display) => model.find({ _id: { $in: ids } }, display);
+const id2object = (ids, display) => model.findUserAccounts({ _id: { $in: ids } }, display);
 
 /**
  * Convert list of userIds into objects
@@ -198,17 +198,100 @@ const id2object = (ids, display) => model.find({ _id: { $in: ids } }, display);
  * * @param {List<String>} display display parameters
  * @returns {Promise<List<User>>}
  */
-const search = (q) => model.find({ $or: [{ firstName: { $regex: q } }, { lastName: { $regex: q } }] }, { firstName: 1, lastName: 1, email: 1 });
+const search = (q) => model.searchUserAccounts(q);
+
+/**
+ * Generate random 6 digit otp
+ * @returns {Number} random 6 digit otp
+ */
+const generateOTP = () => Math.floor(Math.random() * 899999 + 100000);
+
+/**
+ * Check if account exists or not with provided mobile number
+ * @param {string} mobile mobiler number to verify if exists or not
+ * @returns {Promise<User>}
+ */
+const verifyMobile = (mobile) => model.verifyMobile(mobile)
+  .then((user) => {
+    if (!user) throw getRichError('Parameter', 'Mobile does not exists', { user }, null, 'error', null);
+    return user;
+  });
+
+/**
+ * Verify OTP for the provided mobile number
+ * @param {String} mobile mobile number to verify otp with
+ * @param {String} otp Otp to verify
+ * @returns Promise
+ */
+const verifyOtp = (mobile, otp) => model.getUserByMobile(mobile)
+  .then((user) => {
+    if (user.otp === parseInt(otp, 10)) {
+      return user;
+    }
+    throw getRichError('Parameter', 'Mobile does not exists', { user }, null, 'error', null);
+  });
+
+/**
+ * Verify if the user is newly registered or not based on the verification
+ * @param {Object} user user object from db
+ * @returns Promise
+ */
+const isNewRegistration = (user) => {
+  if (user.isVerified) {
+    return user;
+  }
+  return model.updateProfile(user._id, { isVerified: true })
+    .then(() => createUserBucket(user._id))
+    .then(() => {
+      delete user.isVerified;
+      return user;
+    });
+};
+
+/**
+ * Generate OTP for verification
+ * if the user does not exists with the provided mobile nubmer
+ * new user is created otherwise OTP is set for existsing user
+ * @param {String} mobile Mobile number to verify and generate otp
+ * @returns Promise
+ */
+const verifyUserAndGenerateOTP = (mobile) => {
+  const otp = generateOTP();
+  return model.verifyMobile(mobile)
+    .then((user) => {
+      if (user) return model.setOTP(mobile, otp);
+      return model.createUserAccount({
+        mobile, otp,
+      });
+    })
+    .then(() => utils.connect(sendOTP, 'POST', { to: [mobile], content: otpTemplate(otp) }))
+    .then(() => ({ mobile, otp }));
+};
+
+/**
+ * Verify OTP and user account
+ * @param {String} mobile mobile number to be verified
+ * @param {String} otp OTP to verify with the mobile number
+ * @returns Promise
+ */
+const verifyOTPAndUserAccount = (mobile, otp) => verifyOtp(mobile, otp)
+  .then((user) => isNewRegistration(user))
+  .then((user) => generateAndSaveAuthToken(user.toObject()))
+  .catch((user) => getRichError('System', 'error while verifying user otp', { user }, null, 'error', null));
 
 module.exports = {
   authenticate,
   verifyEmail,
   createUser,
   getUserById,
-  generateAndSaveAuthToken,
   getAccessToken,
   updateProfile,
   id2object,
   search,
   createUserBucket,
+  verifyUserAndGenerateOTP,
+  verifyMobile,
+  verifyOtp,
+  verifyOTPAndUserAccount,
+  isNewRegistration,
 };

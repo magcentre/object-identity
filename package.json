@@ -7,7 +7,7 @@
     "test": "mocha --exit"
   },
   "dependencies": {
-    "@magcentre/api-utils": "^1.0.8",
+    "@magcentre/api-utils": "^1.0.9",
     "@magcentre/init": "^1.0.1",
     "@magcentre/logger-helper": "^1.0.1",
     "@magcentre/mongoose-helper": "^1.0.0",

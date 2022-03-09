@@ -13,18 +13,14 @@ const userSchema = mongoose.Schema(
   {
     firstName: {
       type: String,
-      required: true,
       trim: true,
     },
     lastName: {
       type: String,
-      required: true,
       trim: true,
     },
     email: {
       type: String,
-      required: true,
-      unique: true,
       trim: true,
       lowercase: true,
       validate(value) {
@@ -41,7 +37,6 @@ const userSchema = mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
       trim: true,
       minlength: 8,
       validate(value) {
@@ -55,7 +50,20 @@ const userSchema = mongoose.Schema(
       enum: [userTypes.ADMIN, userTypes.USER],
       default: userTypes.USER,
     },
-    profile: {
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    mobile: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
+    otp: {
+      type: Number,
+    },
+    avatar: {
       type: String,
       trim: true,
     },
@@ -75,16 +83,19 @@ const userSchema = mongoose.Schema(
 
 userSchema.pre('save', function (next) {
   const user = this;
-  if (user.isModified('password')) {
-    bcrypt.hash(user.password, 8)
-      .then((hash) => {
-        user.password = hash;
-        next();
-      })
-      .catch((err) => {
-        throw getRichError('System', 'error while generating the password hasg', { err }, err, 'error', null);
-      });
+  if (user.email) {
+    if (user.isModified('password')) {
+      bcrypt.hash(user.password, 8)
+        .then((hash) => {
+          user.password = hash;
+          next();
+        })
+        .catch((err) => {
+          throw getRichError('System', 'error while generating the password hasg', { err }, err, 'error', null);
+        });
+    }
   }
+  next();
 });
 
 /**
@@ -167,7 +178,58 @@ UserAccount.getUserById = (id) => UserAccount.findById(id, { password: 0 })
  */
 UserAccount.updateUserById = (id, param) => UserAccount.update({ _id: id }, { $set: param })
   .catch((err) => {
-    throw getRichError('System', 'error while fupdaating user with id', { err, id, param }, err, 'error', null);
+    throw getRichError('System', 'error while updating user with id', { err, id, param }, err, 'error', null);
+  });
+
+/**
+ * finding users with id
+ * @param {List<String>}  ids - list of user ids
+ * @param {Object}  display - objects to be displayed
+ * @returns {Promise<User>}
+ */
+UserAccount.findUserAccounts = (ids, display) => UserAccount.find({ _id: { $in: ids } }, display)
+  .catch((err) => {
+    throw getRichError('System', 'error while finding users with id', { err, ids, display }, err, 'error', null);
+  });
+
+/**
+ * search user with text
+ * @param {String}  q - objects to be displayed
+ * @returns {Promise<User>}
+ */
+UserAccount.searchUserAccounts = (q) => UserAccount.find({ $or: [{ firstName: { $regex: q } }, { lastName: { $regex: q } }] }, { firstName: 1, lastName: 1, email: 1 })
+  .catch((err) => {
+    throw getRichError('System', 'error while searching users with query', { err, q }, err, 'error', null);
+  });
+
+/**
+ * verify mobile number, if mobile exists return the user object otherwise throw error
+ * @param {Number} mobile - Mobile number of registreed user
+ * @returns {Promise<boolean>}
+*/
+UserAccount.verifyMobile = (mobile) => UserAccount.findOne({ mobile })
+  .catch((err) => {
+    throw getRichError('System', 'error while finding user with mobile', { err, mobile }, err, 'error', null);
+  });
+/**
+ * Set newly generated OTP to the user to verify
+ * @param {String} mobile Mobile number of the registed user
+ * @param {String} otp OTP to set for the user
+ * @returns Promise
+ */
+UserAccount.setOTP = (mobile, otp) => UserAccount.findOneAndUpdate({ mobile }, { $set: { otp } })
+  .catch((err) => {
+    throw getRichError('System', 'error while finding user with mobile', { err, mobile }, err, 'error', null);
+  });
+
+/**
+ * Find user by mobile number
+ * @param {String} mobile search user by mobile number
+ * @returns Promise
+ */
+UserAccount.getUserByMobile = (mobile) => UserAccount.findOne({ mobile })
+  .catch((err) => {
+    throw getRichError('System', 'error while finding user with mobile', { err, mobile }, err, 'error', null);
   });
 
 module.exports = {

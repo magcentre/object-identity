@@ -74,6 +74,24 @@ const search = (req, res) => {
     });
 };
 
+const sendOTP = (req, res) => {
+  processor.verifyUserAndGenerateOTP(req.body.mobile)
+    .then((e) => sendResult(e, 200, res, req))
+    .catch((e) => {
+      logger.error(e.message);
+      sendError(e.message, res, e.statusCode || 500, req);
+    });
+};
+
+const verifyOtp = (req, res) => {
+  processor.verifyOTPAndUserAccount(req.body.mobile, req.body.otp)
+    .then((e) => sendResult(e, 200, res, req))
+    .catch((e) => {
+      logger.error(e.message);
+      sendError(e.message, res, e.statusCode || 500, req);
+    });
+};
+
 module.exports = {
   create,
   authenticate,
@@ -82,4 +100,6 @@ module.exports = {
   updateProfile,
   id2object,
   search,
+  sendOTP,
+  verifyOtp,
 };
