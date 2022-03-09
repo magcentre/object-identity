@@ -21,6 +21,7 @@ const userSchema = mongoose.Schema(
     },
     email: {
       type: String,
+      trim: true,
       lowercase: true,
       validate(value) {
         const e = String(value)
@@ -31,6 +32,16 @@ const userSchema = mongoose.Schema(
 
         if (!e) {
           throw getRichError('ParameterError', 'Invalid email', { value }, null, 'error', null);
+        }
+      },
+    },
+    password: {
+      type: String,
+      trim: true,
+      minlength: 8,
+      validate(value) {
+        if (!value.match(/\d/) || !value.match(/[a-zA-Z]/)) {
+          throw getRichError('ParameterError', 'Password must contain at least one letter and one number', { value }, null, 'error', null);
         }
       },
     },
@@ -66,6 +77,23 @@ const userSchema = mongoose.Schema(
     versionKey: false,
   },
 );
+
+userSchema.pre('save', function (next) {
+  const user = this;
+  if (user.email) {
+    if (user.isModified('password')) {
+      bcrypt.hash(user.password, 8)
+        .then((hash) => {
+          user.password = hash;
+          next();
+        })
+        .catch((err) => {
+          throw getRichError('System', 'error while generating the password hasg', { err }, err, 'error', null);
+        });
+    }
+  }
+  next();
+});
 
 /**
  * Check if password matches the user's password
