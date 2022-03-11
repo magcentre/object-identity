@@ -27,12 +27,13 @@ const verifyEmail = (email, excludeUserId) => model.isEmailTaken(email, excludeU
  * @param {string} [secret]
  * @returns {string}
  */
-const generateToken = (userId, expires, type, secret = config.jwt.secret) => {
+const generateToken = (userId, role, expires, type, secret = config.jwt.secret) => {
   // payload to generate jwt token
   const payload = {
     sub: userId,
     iat: moment().unix(),
     exp: expires.unix(),
+    role,
     type,
   };
 
@@ -90,13 +91,13 @@ const generateAndSaveAuthToken = (user) => {
   const accessTokenExpires = moment().add(config.jwt.accessExpirationMinutes, 'minutes');
 
   // generate access token
-  const accessToken = generateToken(user._id, accessTokenExpires, token.types.ACCESS);
+  const accessToken = generateToken(user._id, user.role, accessTokenExpires, token.types.ACCESS);
 
   // generate refresh token expiry
   const refreshTokenExpires = moment().add(config.jwt.refreshExpirationDays, 'days');
 
   // generate refresh token
-  const refreshToken = generateToken(user._id, refreshTokenExpires, token.types.REFRESH);
+  const refreshToken = generateToken(user._id, user.role, refreshTokenExpires, token.types.REFRESH);
 
   // return promise and store token in database
   return token.model.createToken({
