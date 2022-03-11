@@ -156,6 +156,9 @@ const authenticate = (email, password, fcmToken) => model.getUserByEmail(email)
     if (!userWithPassword.isVerified) {
       throw getRichError('ParameterError', 'Your account is not verified, please verify account and try again', { verified: userWithPassword.isVerified }, null, 'error', null);
     }
+    if (userWithPassword.isBlocked) {
+      throw getRichError('ParameterError', 'Your account is blocked, please contact support', { blocked: userWithPassword.isBlocked }, null, 'error', null);
+    }
     return userWithPassword;
   })
   .then((user) => verifyBucket(user._id, user))
@@ -283,10 +286,15 @@ const isNewRegistration = (user) => {
  */
 const verifyUserAndGenerateOTP = (mobile) => {
   const otp = generateOTP();
+  const otpExpiry = Date.now() + config.jwt.otpExpiryTimeInMinutes * 60000;
   return model.verifyMobile(mobile)
     .then((user) => {
-      const otpExpiry = Date.now() + config.jwt.otpExpiryTimeInMinutes * 60000;
-      if (user) return model.setOTP(mobile, otp, otpExpiry);
+      if (user) {
+        if (user.isBlocked) {
+          throw getRichError('ParameterError', 'Your account is blocked, please contact support', { blocked: user.isBlocked }, null, 'error', null);
+        }
+        return model.setOTP(mobile, otp, otpExpiry);
+      }
       return model.createUserAccount({
         mobile, otp, otpExpiry,
       });

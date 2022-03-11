@@ -216,7 +216,7 @@ UserAccount.searchUserAccounts = (q) => UserAccount.find({ $or: [{ firstName: { 
  * @param {Number} mobile - Mobile number of registreed user
  * @returns {Promise<boolean>}
 */
-UserAccount.verifyMobile = (mobile) => UserAccount.findOne({ mobile, isBlocked: false })
+UserAccount.verifyMobile = (mobile) => UserAccount.findOne({ mobile })
   .catch((err) => {
     throw getRichError('System', 'error while finding user with mobile', { err, mobile }, err, 'error', null);
   });
