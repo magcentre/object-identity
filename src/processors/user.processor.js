@@ -60,9 +60,6 @@ const createUser = (body) => {
     .then(() => model.createUserAccount(body))
     .then((newUser) => {
       user = newUser.toObject();
-      return utils.connect(createBucket, 'POST', { bucketName: newUser._id.toHexString() });
-    })
-    .then(() => {
       logger.info('User account created', {
         user,
       });
@@ -140,6 +137,7 @@ const verifyBucket = (userId, user) => {
  * Authenticate user with email and password
  * verify email address if exists
  * match provided password and registered password
+ * verify the bucket of the user in minio
  * generate the access token and refresh token
  * @param {String} email Registered email address
  * @param {String} password Password
@@ -152,9 +150,9 @@ const authenticate = (email, password, fcmToken) => model.getUserByEmail(email)
     return user;
   })
   .then((user) => user.isPasswordMatch(password))
-  .then((user) => verifyBucket(user._id, user))
   .then((userWithPassword) => {
     if (!userWithPassword.match) throw getRichError('ParameterError', 'Invalid password', { match: userWithPassword.match }, null, 'error', null);
+    if (!userWithPassword.isVerified) throw getRichError('ParameterError', 'Your account is not verified, please verify account and try again', { verified: userWithPassword.isVerified }, null, 'error', null);
     return userWithPassword;
   })
   .then((user) => model.updateProfile(user._id, { fcmToken }))
@@ -252,11 +250,14 @@ const verifyOtp = (mobile, otp) => model.getUserByMobile(mobile)
  * @returns Promise
  */
 const isNewRegistration = (user) => {
-  if (user.isVerified) {
-    return user;
+  if (user.isBucketCreated) {
+    return model.updateProfile(user._id, { isVerified: true, isBucketCreated: true, })
+      .then(() => {
+        return user;
+      });
   }
-  return model.updateProfile(user._id, { isVerified: true })
-    .then(() => createUserBucket(user._id))
+  return createUserBucket(user._id)
+    .then(() => model.updateProfile(user._id, { isVerified: true, isBucketCreated: true, }))
     .then(() => {
       delete user.isVerified;
       return user;
@@ -291,8 +292,8 @@ const verifyUserAndGenerateOTP = (mobile) => {
  */
 const verifyOTPAndUserAccount = (mobile, otp) => verifyOtp(mobile, otp)
   .then((user) => isNewRegistration(user))
-  .then((user) => generateAndSaveAuthToken(user.toObject()))
-  .catch((user) => getRichError('System', 'error while verifying user otp', { user }, null, 'error', null));
+  .then((user) => generateAndSaveAuthToken(user))
+  .catch((err) => getRichError('System', 'error while verifying user otp', { err }, err, 'error', null));
 
 module.exports = {
   authenticate,
