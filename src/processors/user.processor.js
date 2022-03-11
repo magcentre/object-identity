@@ -6,7 +6,7 @@ const logger = require('@magcentre/logger-helper');
 const { model } = require('../models/user.model');
 const token = require('../models/token.model');
 const config = require('../configuration/config');
-const { createBucket, sendOTP, otpTemplate } = require('../constants');
+const { bucketExists, createBucket, sendOTP, otpTemplate } = require('../constants');
 
 /**
  * Check if account exists or not with provided email address
@@ -123,6 +123,20 @@ const generateAndSaveAuthToken = (user) => {
 };
 
 /**
+ * Verify if the bucket of the user exists before allowing user to login into the portl
+ * @param {String} userId userid of user to verify the bucket present in minio via container
+ * @param {*} user user object to return if the user bucket exists
+ * @returns 
+ */
+const verifyBucket = (userId, user) => {
+  return utils.connect(bucketExists, 'POST', { bucketName: userId })
+    .catch((err) => {
+      throw getRichError('System', 'Bucket does not exists for the user', { userId, user }, err, 'error', null);
+    })
+    .then(() => user);
+}
+
+/**
  * Authenticate user with email and password
  * verify email address if exists
  * match provided password and registered password
@@ -138,6 +152,7 @@ const authenticate = (email, password, fcmToken) => model.getUserByEmail(email)
     return user;
   })
   .then((user) => user.isPasswordMatch(password))
+  .then((user) => verifyBucket(user._id, user))
   .then((userWithPassword) => {
     if (!userWithPassword.match) throw getRichError('ParameterError', 'Invalid password', { match: userWithPassword.match }, null, 'error', null);
     return userWithPassword;

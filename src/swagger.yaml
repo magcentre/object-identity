@@ -110,6 +110,7 @@ paths:
               - firstName
               - lastName
               - email
+              - mobile
               - password
             properties:
               firstName:
@@ -117,6 +118,8 @@ paths:
               lastName:
                 type: string
               email:
+                type: string
+              mobile:
                 type: string
               password:
                 type: string
