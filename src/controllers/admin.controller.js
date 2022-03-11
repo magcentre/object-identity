@@ -13,6 +13,17 @@ const usersList = (req, res) => {
     });
 };
 
+const updateUser = (req, res) => {
+  const userId = req.swagger.params.userId.raw;
+  processor.updateUser(userId, req.body)
+    .then((list) => sendResult(list, 200, res, req))
+    .catch((err) => {
+      logger.error(err);
+      sendError(err, res, err.statusCode || 500, req);
+    });
+};
+
 module.exports = {
   usersList,
+  updateUser,
 };
