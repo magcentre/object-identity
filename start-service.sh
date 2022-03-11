@@ -16,6 +16,8 @@ export JWT_REFRESH_EXPIRATION_DAYS=30
 export JWT_RESET_PASSWORD_EXPIRATION_MINUTES=10
 # Number of minutes after which a verify email token expires
 export JWT_VERIFY_EMAIL_EXPIRATION_MINUTES=10
+# OTP expiry time for otp registration
+export OTP_EXPIRY_TIME_MINUTES=1
 
 export API_GATEWAY='http://localhost:4999'
 

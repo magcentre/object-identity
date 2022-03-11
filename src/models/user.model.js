@@ -67,6 +67,9 @@ const userSchema = mongoose.Schema(
     otp: {
       type: Number,
     },
+    otpExpiry: {
+      type: String,
+    },
     avatar: {
       type: String,
       trim: true,
@@ -223,7 +226,7 @@ UserAccount.verifyMobile = (mobile) => UserAccount.findOne({ mobile, isBlocked: 
  * @param {String} otp OTP to set for the user
  * @returns Promise
  */
-UserAccount.setOTP = (mobile, otp) => UserAccount.findOneAndUpdate({ mobile }, { $set: { otp } })
+UserAccount.setOTP = (mobile, otp, expiry) => UserAccount.findOneAndUpdate({ mobile }, { $set: { otp, otpExpiry: expiry } })
   .catch((err) => {
     throw getRichError('System', 'error while finding user with mobile', { err, mobile }, err, 'error', null);
   });

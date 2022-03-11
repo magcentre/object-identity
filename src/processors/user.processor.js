@@ -239,10 +239,17 @@ const verifyMobile = (mobile) => model.verifyMobile(mobile)
  */
 const verifyOtp = (mobile, otp) => model.getUserByMobile(mobile)
   .then((user) => {
-    if (user.otp === parseInt(otp, 10)) {
-      return user;
+    if (!user) {
+      throw getRichError('Parameter', 'Mobile does not exists', { mobile, otp }, null, 'error', null);
     }
-    throw getRichError('Parameter', 'Mobile does not exists', { user }, null, 'error', null);
+    if (Date.now() <= parseInt(user.otpExpiry)) {
+      if (user.otp === parseInt(otp, 10)) {
+        return user;
+      }
+      throw getRichError('Parameter', 'Invalid otp, please try again', { mobile, otp }, null, 'error', null);
+    }
+    throw getRichError('Parameter', 'OTP is expired', { mobile, otp }, null, 'error', null);
+
   });
 
 /**
@@ -252,13 +259,13 @@ const verifyOtp = (mobile, otp) => model.getUserByMobile(mobile)
  */
 const isNewRegistration = (user) => {
   if (user.isBucketCreated) {
-    return model.updateProfile(user._id, { isVerified: true, isBucketCreated: true, })
+    return model.updateProfile(user._id, { isVerified: true, isBucketCreated: true, otp: '', otpExpiry: '' })
       .then(() => {
         return user;
       });
   }
   return createUserBucket(user._id)
-    .then(() => model.updateProfile(user._id, { isVerified: true, isBucketCreated: true, }))
+    .then(() => model.updateProfile(user._id, { isVerified: true, isBucketCreated: true, otp: '', otpExpiry: '' }))
     .then(() => {
       delete user.isVerified;
       return user;
@@ -276,12 +283,13 @@ const verifyUserAndGenerateOTP = (mobile) => {
   const otp = generateOTP();
   return model.verifyMobile(mobile)
     .then((user) => {
-      if (user) return model.setOTP(mobile, otp);
+      const otpExpiry = Date.now() + config.jwt.otpExpiryTimeInMinutes * 60000;
+      if (user) return model.setOTP(mobile, otp, otpExpiry);
       return model.createUserAccount({
-        mobile, otp,
+        mobile, otp, otpExpiry,
       });
     })
-    .then(() => utils.connect(sendOTP, 'POST', { to: [mobile], content: otpTemplate(otp) }))
+    .then(() => utils.connect(sendOTP, 'POST', { to: [mobile], content: otpTemplate(otp, config.jwt.otpExpiryTimeInMinutes) }))
     .then(() => ({ mobile, otp }));
 };
 
