@@ -311,8 +311,7 @@ const verifyUserAndGenerateOTP = (mobile) => {
  */
 const verifyOTPAndUserAccount = (mobile, otp) => verifyOtp(mobile, otp)
   .then((user) => isNewRegistration(user))
-  .then((user) => generateAndSaveAuthToken(user.toObject()))
-  .catch((err) => getRichError('System', 'error while verifying user otp', { err }, err, 'error', null));
+  .then((user) => generateAndSaveAuthToken(user.toObject()));
 
 module.exports = {
   authenticate,
