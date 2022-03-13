@@ -6,7 +6,9 @@ const logger = require('@magcentre/logger-helper');
 const { model } = require('../models/user.model');
 const token = require('../models/token.model');
 const config = require('../configuration/config');
-const { createBucket, sendOTP, otpTemplate } = require('../constants');
+const {
+  bucketExists, createBucket, sendOTP, otpTemplate,
+} = require('../constants');
 
 /**
  * Check if account exists or not with provided email address
@@ -27,12 +29,13 @@ const verifyEmail = (email, excludeUserId) => model.isEmailTaken(email, excludeU
  * @param {string} [secret]
  * @returns {string}
  */
-const generateToken = (userId, expires, type, secret = config.jwt.secret) => {
+const generateToken = (userId, role, expires, type, secret = config.jwt.secret) => {
   // payload to generate jwt token
   const payload = {
     sub: userId,
     iat: moment().unix(),
     exp: expires.unix(),
+    role,
     type,
   };
 
@@ -60,9 +63,6 @@ const createUser = (body) => {
     .then(() => model.createUserAccount(body))
     .then((newUser) => {
       user = newUser.toObject();
-      return utils.connect(createBucket, 'POST', { bucketName: newUser._id.toHexString() });
-    })
-    .then(() => {
       logger.info('User account created', {
         user,
       });
@@ -93,13 +93,13 @@ const generateAndSaveAuthToken = (user) => {
   const accessTokenExpires = moment().add(config.jwt.accessExpirationMinutes, 'minutes');
 
   // generate access token
-  const accessToken = generateToken(user._id, accessTokenExpires, token.types.ACCESS);
+  const accessToken = generateToken(user._id, user.role, accessTokenExpires, token.types.ACCESS);
 
   // generate refresh token expiry
   const refreshTokenExpires = moment().add(config.jwt.refreshExpirationDays, 'days');
 
   // generate refresh token
-  const refreshToken = generateToken(user._id, refreshTokenExpires, token.types.REFRESH);
+  const refreshToken = generateToken(user._id, user.role, refreshTokenExpires, token.types.REFRESH);
 
   // return promise and store token in database
   return token.model.createToken({
@@ -110,7 +110,7 @@ const generateAndSaveAuthToken = (user) => {
     blacklisted: false,
   })
     .then((newToken) => ({
-      ...user.toObject(),
+      ...user,
       access: {
         token: accessToken,
         expires: accessTokenExpires.toDate(),
@@ -123,9 +123,22 @@ const generateAndSaveAuthToken = (user) => {
 };
 
 /**
+ * Verify if the bucket of the user exists before allowing user to login into the portl
+ * @param {String} userId userid of user to verify the bucket present in minio via container
+ * @param {*} user user object to return if the user bucket exists
+ * @returns
+ */
+const verifyBucket = (userId, user) => utils.connect(bucketExists, 'POST', { bucketName: userId })
+  .catch((err) => {
+    throw getRichError('System', 'Bucket does not exists for the user', { userId, user }, err, 'error', null);
+  })
+  .then(() => user);
+
+/**
  * Authenticate user with email and password
  * verify email address if exists
  * match provided password and registered password
+ * verify the bucket of the user in minio
  * generate the access token and refresh token
  * @param {String} email Registered email address
  * @param {String} password Password
@@ -140,10 +153,17 @@ const authenticate = (email, password, fcmToken) => model.getUserByEmail(email)
   .then((user) => user.isPasswordMatch(password))
   .then((userWithPassword) => {
     if (!userWithPassword.match) throw getRichError('ParameterError', 'Invalid password', { match: userWithPassword.match }, null, 'error', null);
+    if (!userWithPassword.isVerified) {
+      throw getRichError('ParameterError', 'Your account is not verified, please verify account and try again', { verified: userWithPassword.isVerified }, null, 'error', null);
+    }
+    if (userWithPassword.isBlocked) {
+      throw getRichError('ParameterError', 'Your account is blocked, please contact support', { blocked: userWithPassword.isBlocked }, null, 'error', null);
+    }
     return userWithPassword;
   })
+  .then((user) => verifyBucket(user._id, user))
   .then((user) => model.updateProfile(user._id, { fcmToken }))
-  .then((user) => generateAndSaveAuthToken(user));
+  .then((user) => generateAndSaveAuthToken(user.toObject()));
 
 /**
  * Verify Token
@@ -166,9 +186,7 @@ const getAccessToken = (refreshToken) => utils.verifyJWTToken(refreshToken, conf
   })
   .then((oldToken) => {
     const { user } = oldToken;
-    return generateAndSaveAuthToken({
-      _id: user,
-    });
+    return generateAndSaveAuthToken(user);
   });
 
 /**
@@ -190,7 +208,7 @@ const updateProfile = (email, id, param) => verifyEmail(email, [id])
  * * @param {List<String>} display display parameters
  * @returns {Promise<List<User>>}
  */
-const id2object = (ids, display) => model.findUserAccounts({ _id: { $in: ids } }, display);
+const id2object = (ids, display) => model.findUserAccounts(ids, display);
 
 /**
  * Convert list of userIds into objects
@@ -225,10 +243,16 @@ const verifyMobile = (mobile) => model.verifyMobile(mobile)
  */
 const verifyOtp = (mobile, otp) => model.getUserByMobile(mobile)
   .then((user) => {
-    if (user.otp === parseInt(otp, 10)) {
-      return user;
+    if (!user) {
+      throw getRichError('Parameter', 'Mobile does not exists', { mobile, otp }, null, 'error', null);
     }
-    throw getRichError('Parameter', 'Mobile does not exists', { user }, null, 'error', null);
+    if (Date.now() <= parseInt(user.otpExpiry, 10)) {
+      if (user.otp === parseInt(otp, 10)) {
+        return user;
+      }
+      throw getRichError('Parameter', 'Invalid otp, please try again', { mobile, otp }, null, 'error', null);
+    }
+    throw getRichError('Parameter', 'OTP is expired', { mobile, otp }, null, 'error', null);
   });
 
 /**
@@ -237,11 +261,16 @@ const verifyOtp = (mobile, otp) => model.getUserByMobile(mobile)
  * @returns Promise
  */
 const isNewRegistration = (user) => {
-  if (user.isVerified) {
-    return user;
+  if (user.isBucketCreated) {
+    return model.updateProfile(user._id, {
+      isVerified: true, isBucketCreated: true, otp: '', otpExpiry: '',
+    })
+      .then(() => user);
   }
-  return model.updateProfile(user._id, { isVerified: true })
-    .then(() => createUserBucket(user._id))
+  return createUserBucket(user._id)
+    .then(() => model.updateProfile(user._id, {
+      isVerified: true, isBucketCreated: true, otp: '', otpExpiry: '',
+    }))
     .then(() => {
       delete user.isVerified;
       return user;
@@ -257,14 +286,20 @@ const isNewRegistration = (user) => {
  */
 const verifyUserAndGenerateOTP = (mobile) => {
   const otp = generateOTP();
+  const otpExpiry = Date.now() + config.jwt.otpExpiryTimeInMinutes * 60000;
   return model.verifyMobile(mobile)
     .then((user) => {
-      if (user) return model.setOTP(mobile, otp);
+      if (user) {
+        if (user.isBlocked) {
+          throw getRichError('ParameterError', 'Your account is blocked, please contact support', { blocked: user.isBlocked }, null, 'error', null);
+        }
+        return model.setOTP(mobile, otp, otpExpiry);
+      }
       return model.createUserAccount({
-        mobile, otp,
+        mobile, otp, otpExpiry,
       });
     })
-    .then(() => utils.connect(sendOTP, 'POST', { to: [mobile], content: otpTemplate(otp) }))
+    .then(() => utils.connect(sendOTP, 'POST', { to: [mobile], content: otpTemplate(otp, config.jwt.otpExpiryTimeInMinutes) }))
     .then(() => ({ mobile, otp }));
 };
 
@@ -277,7 +312,7 @@ const verifyUserAndGenerateOTP = (mobile) => {
 const verifyOTPAndUserAccount = (mobile, otp) => verifyOtp(mobile, otp)
   .then((user) => isNewRegistration(user))
   .then((user) => generateAndSaveAuthToken(user.toObject()))
-  .catch((user) => getRichError('System', 'error while verifying user otp', { user }, null, 'error', null));
+  .catch((err) => getRichError('System', 'error while verifying user otp', { err }, err, 'error', null));
 
 module.exports = {
   authenticate,

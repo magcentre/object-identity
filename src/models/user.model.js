@@ -54,6 +54,10 @@ const userSchema = mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isBucketCreated: {
+      type: Boolean,
+      default: false,
+    },
     mobile: {
       type: String,
       required: true,
@@ -62,6 +66,9 @@ const userSchema = mongoose.Schema(
     },
     otp: {
       type: Number,
+    },
+    otpExpiry: {
+      type: String,
     },
     avatar: {
       type: String,
@@ -83,7 +90,7 @@ const userSchema = mongoose.Schema(
 
 userSchema.pre('save', function (next) {
   const user = this;
-  if (user.email) {
+  if (user.password) {
     if (user.isModified('password')) {
       bcrypt.hash(user.password, 8)
         .then((hash) => {
@@ -94,8 +101,9 @@ userSchema.pre('save', function (next) {
           throw getRichError('System', 'error while generating the password hasg', { err }, err, 'error', null);
         });
     }
+  } else {
+    next();
   }
-  next();
 });
 
 /**
@@ -105,6 +113,7 @@ userSchema.pre('save', function (next) {
  */
 userSchema.methods.isPasswordMatch = function (password) {
   const user = this;
+  console.log(password, user.password);
   return bcrypt.compare(password, user.password)
     .then((isValid) => ({ match: isValid, ...user.toObject() }))
     .catch((err) => {
@@ -217,7 +226,7 @@ UserAccount.verifyMobile = (mobile) => UserAccount.findOne({ mobile })
  * @param {String} otp OTP to set for the user
  * @returns Promise
  */
-UserAccount.setOTP = (mobile, otp) => UserAccount.findOneAndUpdate({ mobile }, { $set: { otp } })
+UserAccount.setOTP = (mobile, otp, expiry) => UserAccount.findOneAndUpdate({ mobile }, { $set: { otp, otpExpiry: expiry } })
   .catch((err) => {
     throw getRichError('System', 'error while finding user with mobile', { err, mobile }, err, 'error', null);
   });

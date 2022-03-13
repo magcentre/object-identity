@@ -1,5 +1,6 @@
 module.exports = {
   createBucket: '/container/bucket/create',
   sendOTP: '/notification/send-sms',
-  otpTemplate: (otp) => `Your One Time Password(OTP) is ${otp}. Don't share this with anyone.`,
+  bucketExists: '/container/bucket/exists',
+  otpTemplate: (otp, expiry) => `Your One Time Password(OTP) is ${otp}. It is valid for ${expiry} mins. Don't share this with anyone.`,
 };
