@@ -1,4 +1,3 @@
-/* eslint-disable func-names */
 const { mongoose } = require('@magcentre/mongoose-helper');
 const { getRichError } = require('@magcentre/response-helper');
 
@@ -101,7 +100,8 @@ userSchema.pre('save', function (next) {
           throw getRichError('System', 'error while generating the password hasg', { err }, err, 'error', null);
         });
     }
-  } else {
+  }
+  else {
     next();
   }
 });
@@ -113,7 +113,6 @@ userSchema.pre('save', function (next) {
  */
 userSchema.methods.isPasswordMatch = function (password) {
   const user = this;
-  console.log(password, user.password);
   return bcrypt.compare(password, user.password)
     .then((isValid) => ({ match: isValid, ...user.toObject() }))
     .catch((err) => {
@@ -239,6 +238,26 @@ UserAccount.setOTP = (mobile, otp, expiry) => UserAccount.findOneAndUpdate({ mob
 UserAccount.getUserByMobile = (mobile) => UserAccount.findOne({ mobile })
   .catch((err) => {
     throw getRichError('System', 'error while finding user with mobile', { err, mobile }, err, 'error', null);
+  });
+
+/**
+ * Find user by mobile number
+ * @param {String} mobile search user by mobile number
+ * @returns Promise
+ */
+UserAccount.getUsersList = () => UserAccount.find({}, { otp: 0, otpExpiry: 0, password: 0 })
+  .catch((err) => {
+    throw getRichError('System', 'error while fetching all users list user with mobile', {}, err, 'error', null);
+  });
+
+/**
+* Find user by mobile number
+* @param {String} mobile search user by mobile number
+* @returns Promise
+*/
+UserAccount.updateUserById = (userId, properties) => UserAccount.findByIdAndUpdate(userId, properties)
+  .catch((err) => {
+    throw getRichError('System', 'error while updating the user details', { userId, properties }, err, 'error', null);
   });
 
 module.exports = {

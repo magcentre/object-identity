@@ -5,7 +5,7 @@ info:
   description: The micro-service intended to provide the user role and access management
   contact:
     email: prasanna@makonlinesolutions.com
-host: 185.213.175.212:487:5004
+host: localhost:5004
 basePath: /
 securityDefinitions:
   jwt:
@@ -15,6 +15,8 @@ securityDefinitions:
 tags:
   - name: "user"
     description: "Everything about user, authetication and role management"
+  - name: "admin"
+    description: "Endpoints refering to all the administration of user activities"
 schemes:
   - http
   - https
@@ -37,10 +39,65 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
+  
+  /admin/users:
+    x-swagger-router-controller: admin.controller
+    get:
+      x-security-scopes: admin
+      security:
+        - jwt: []
+      
+      description: Returns the systems cpu information
+      operationId: usersList
+      tags:
+        - "admin"
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/SystemHealthResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  
+  /admin/user/{userId}:
+    x-swagger-router-controller: admin.controller
+    patch:
+      x-security-scopes: admin
+      security:
+        - jwt: []
+      parameters:
+        - in: path
+          name: userId
+          type: string
+          required: true
+          description: userId to update
+        - in: body
+          name: User body object
+          description: User creation body object
+          schema:
+            type: object
+       
+      description: Returns the systems cpu information
+      operationId: updateUser
+      tags:
+        - "admin"
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/SystemHealthResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
 
   /user/search:
     x-swagger-router-controller: user.controller
     get:
+      tags:
+        - "user"
       summary: Create a new user account
       description: Create a new user account
       operationId: search

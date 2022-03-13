@@ -12,7 +12,7 @@ services:
       - cloud-network
     volumes:
       - /home/prasanna/container-stroage/object-identity:/data/db
-      
+  
   mongo-express:
     container_name: object-identity-db-ui
     image: mongo-express
