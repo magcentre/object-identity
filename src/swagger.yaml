@@ -5,7 +5,7 @@ info:
   description: The micro-service intended to provide the user role and access management
   contact:
     email: prasanna@makonlinesolutions.com
-host: localhost:5004
+host: 185.213.175.212:487:5004
 basePath: /
 securityDefinitions:
   jwt:
