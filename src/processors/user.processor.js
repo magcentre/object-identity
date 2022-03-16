@@ -265,16 +265,16 @@ const verifyOtp = (mobile, otp) => model.getUserByMobile(mobile)
  * @param {Object} user user object from db
  * @returns Promise
  */
-const isNewRegistration = (user) => {
+const isNewRegistration = (user, fcmToken) => {
   if (user.isBucketCreated) {
     return model.updateProfile(user._id, {
-      isVerified: true, isBucketCreated: true, otp: '', otpExpiry: '',
+      isVerified: true, isBucketCreated: true, otp: '', otpExpiry: '', fcmToken,
     })
       .then(() => user);
   }
   return createUserBucket(user._id)
     .then(() => model.updateProfile(user._id, {
-      isVerified: true, isBucketCreated: true, otp: '', otpExpiry: '',
+      isVerified: true, isBucketCreated: true, otp: '', otpExpiry: '', fcmToken,
     }))
     .then(() => {
       delete user.isVerified;
@@ -314,8 +314,8 @@ const verifyUserAndGenerateOTP = (mobile) => {
  * @param {String} otp OTP to verify with the mobile number
  * @returns Promise
  */
-const verifyOTPAndUserAccount = (mobile, otp) => verifyOtp(mobile, otp)
-  .then((user) => isNewRegistration(user))
+const verifyOTPAndUserAccount = (mobile, otp, fcmToken) => verifyOtp(mobile, otp)
+  .then((user) => isNewRegistration(user, fcmToken))
   .then((user) => generateAndSaveAuthToken(user.toObject()));
 
 module.exports = {

@@ -112,7 +112,6 @@ userSchema.pre('save', function (next) {
  */
 userSchema.methods.isPasswordMatch = function (password) {
   const user = this;
-  console.log(password, user.password);
   return bcrypt.compare(password, user.password)
     .then((isValid) => ({ match: isValid, ...user.toObject() }))
     .catch((err) => {

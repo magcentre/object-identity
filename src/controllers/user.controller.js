@@ -84,7 +84,7 @@ const sendOTP = (req, res) => {
 };
 
 const verifyOtp = (req, res) => {
-  processor.verifyOTPAndUserAccount(req.body.mobile, req.body.otp)
+  processor.verifyOTPAndUserAccount(req.body.mobile, req.body.otp, req.body.fcmToken)
     .then((e) => sendResult(e, 200, res, req))
     .catch((e) => {
       logger.error(e.message);

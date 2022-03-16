@@ -535,6 +535,8 @@ paths:
                 type: string
               otp:
                 type: string
+              fcmToken:
+                type: string
       responses:
         "200":
           description: Success
