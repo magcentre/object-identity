@@ -60,6 +60,11 @@ const createUserBucket = (bucketName) => utils.connect(createBucket, 'POST', { b
 const createUser = (body) => {
   let user = {};
   return verifyEmail(body.email)
+    .then(() => model.verifyMobile(body.mobile))
+    .then((userSearched) => {
+      if (userSearched) throw getRichError('ParameterError', 'Account with same mobile number already exists', { body }, null, 'error', null);
+      return userSearched;
+    })
     .then(() => model.createUserAccount(body))
     .then((newUser) => {
       user = newUser.toObject();
