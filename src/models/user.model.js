@@ -100,7 +100,8 @@ userSchema.pre('save', function (next) {
           throw getRichError('System', 'error while generating the password hasg', { err }, err, 'error', null);
         });
     }
-  } else {
+  }
+  else {
     next();
   }
 });
@@ -141,10 +142,23 @@ UserAccount.isEmailTaken = (email, excludeUserId) => UserAccount.findOne({ email
  * @param {Object}  params - The json config of the update values
  * @returns {Promise<User>}
  */
-UserAccount.updateProfile = (id, params) => UserAccount.findByIdAndUpdate(id, { $set: params })
-  .catch((err) => {
-    throw getRichError('System', 'error while finding and updateing the profile with mongo id', { id, params }, err, 'error', null);
-  });
+UserAccount.updateProfile = (id, params) => {
+  if (params.password) {
+    return bcrypt.hash(params.password, 8)
+      .then((hash) => {
+        params.password = hash;
+        return params;
+      })
+      .then(() => UserAccount.findByIdAndUpdate(id, { $set: params }))
+      .catch((err) => {
+        throw getRichError('System', 'error while generating the password hasg', { err }, err, 'error', null);
+      });
+  }
+  return UserAccount.findByIdAndUpdate(id, { $set: params })
+    .catch((err) => {
+      throw getRichError('System', 'error while finding and updateing the profile with mongo id', { id, params }, err, 'error', null);
+    });
+};
 
 /**
  * seach user by email address and return
@@ -175,17 +189,6 @@ UserAccount.createUserAccount = (body) => UserAccount.create(body)
 UserAccount.getUserById = (id) => UserAccount.findById(id, { password: 0 })
   .catch((err) => {
     throw getRichError('System', 'error while fetching user with id', { err, id }, err, 'error', null);
-  });
-
-/**
- * Update user with id
- * @param {String}  id - user mongo id
- * @param {Object}  id - parameters to update
- * @returns {Promise<User>}
- */
-UserAccount.updateUserById = (id, param) => UserAccount.update({ _id: id }, { $set: param })
-  .catch((err) => {
-    throw getRichError('System', 'error while updating user with id', { err, id, param }, err, 'error', null);
   });
 
 /**
