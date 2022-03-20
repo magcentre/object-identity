@@ -22,7 +22,7 @@ services:
     environment:
         - ME_CONFIG_MONGODB_SERVER=object-identity-db
         - ME_CONFIG_MONGODB_PORT=27017
-        - ME_CONFIG_MONGODB_ENABLE_ADMIN=false
+        - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
     depends_on:
         - identity-db
     ports:
