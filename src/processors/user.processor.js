@@ -204,7 +204,7 @@ const getAccessToken = (refreshToken) => utils.verifyJWTToken(refreshToken, conf
  * @returns {Promise<Token>}
  */
 const updateProfile = (email, id, param) => verifyEmail(email, [id])
-  .then(() => model.updateUserById(id, param))
+  .then(() => model.updateProfile(id, param))
   .then(() => getUserById(id));
 
 /**

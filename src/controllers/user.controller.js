@@ -47,7 +47,7 @@ const getAccessToken = (req, res) => {
 
 const updateProfile = (req, res) => {
   const userBody = req.body;
-
+  console.log(req.body);
   processor.updateProfile(userBody.email, req.auth.sub, req.body)
     .then((e) => sendResult(e, 200, res, req))
     .catch((e) => {
