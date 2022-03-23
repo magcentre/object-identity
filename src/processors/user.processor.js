@@ -17,7 +17,7 @@ const {
  */
 const verifyEmail = (email, excludeUserId) => model.isEmailTaken(email, excludeUserId)
   .then((user) => {
-    if (user) throw getRichError('Parameter', 'Email already exists', { user }, null, 'error', null);
+    if (user) throw getRichError('Parameter', 'Email already exists', { email: user.email, message: 'Account with same Email already exists' }, null, 'error', null);
     return user;
   });
 
@@ -62,7 +62,10 @@ const createUser = (body) => {
   return verifyEmail(body.email)
     .then(() => model.verifyMobile(body.mobile))
     .then((userSearched) => {
-      if (userSearched) throw getRichError('ParameterError', 'Account with same mobile number already exists', { body }, null, 'error', null);
+      if (userSearched) {
+        const errorMessage = 'Account with same mobile number already exists';
+        throw getRichError('ParameterError', errorMessage, { mobile: body.mobile, message: errorMessage }, null, 'error', null);
+      }
       return userSearched;
     })
     .then(() => model.createUserAccount(body))
@@ -230,17 +233,6 @@ const search = (q) => model.searchUserAccounts(q);
 const generateOTP = () => Math.floor(Math.random() * 899999 + 100000);
 
 /**
- * Check if account exists or not with provided mobile number
- * @param {string} mobile mobiler number to verify if exists or not
- * @returns {Promise<User>}
- */
-const verifyMobile = (mobile) => model.verifyMobile(mobile)
-  .then((user) => {
-    if (!user) throw getRichError('Parameter', 'Mobile does not exists', { user }, null, 'error', null);
-    return user;
-  });
-
-/**
  * Verify OTP for the provided mobile number
  * @param {String} mobile mobile number to verify otp with
  * @param {String} otp Otp to verify
@@ -329,7 +321,6 @@ module.exports = {
   search,
   createUserBucket,
   verifyUserAndGenerateOTP,
-  verifyMobile,
   verifyOtp,
   verifyOTPAndUserAccount,
   isNewRegistration,
