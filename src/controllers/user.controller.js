@@ -49,9 +49,9 @@ const updateProfile = (req, res) => {
   const userBody = req.body;
   processor.updateProfile(userBody.email, req.auth.sub, req.body)
     .then((e) => sendResult(e, 200, res, req))
-    .catch((e) => {
-      logger.error(e);
-      sendError(e.message, res, e.statusCode || 500, req);
+    .catch((err) => {
+      logger.error(err);
+      sendError(err, res, err.statusCode || 500, req);
     });
 };
 
@@ -60,7 +60,7 @@ const id2object = (req, res) => {
     .then((e) => sendResult(e, 200, res, req))
     .catch((e) => {
       logger.error(e);
-      sendError(e.message, res, e.statusCode || 500, req);
+      sendError(e, res, e.statusCode || 500, req);
     });
 };
 
@@ -69,7 +69,7 @@ const search = (req, res) => {
     .then((e) => sendResult(e, 200, res, req))
     .catch((e) => {
       logger.error(e);
-      sendError(e.message, res, e.statusCode || 500, req);
+      sendError(e, res, e.statusCode || 500, req);
     });
 };
 
@@ -78,7 +78,7 @@ const sendOTP = (req, res) => {
     .then((e) => sendResult(e, 200, res, req))
     .catch((e) => {
       logger.error(e.message);
-      sendError(e.message, res, e.statusCode || 500, req);
+      sendError(e, res, e.statusCode || 500, req);
     });
 };
 
@@ -87,7 +87,7 @@ const verifyOtp = (req, res) => {
     .then((e) => sendResult(e, 200, res, req))
     .catch((e) => {
       logger.error(e.message);
-      sendError(e.message, res, e.statusCode || 500, req);
+      sendError(e, res, e.statusCode || 500, req);
     });
 };
 
