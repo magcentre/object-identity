@@ -39,8 +39,9 @@ const userSchema = mongoose.Schema(
       trim: true,
       minlength: 8,
       validate(value) {
-        if (!value.match(/\d/) || !value.match(/[a-zA-Z]/)) {
-          throw getRichError('ParameterError', 'Password must contain at least one letter and one number', { value }, null, 'error', null);
+        if (!value.match(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/)) {
+          const message = 'Password shoud be Minimum eight characters, at least one letter and one number';
+          throw getRichError('ParameterError', message, { message }, null, 'error', null);
         }
       },
     },
@@ -62,6 +63,12 @@ const userSchema = mongoose.Schema(
       required: true,
       unique: true,
       trim: true,
+      validate(value) {
+        if (!value.match(/^[1-9]{1}[0-9]{9}$/)) {
+          const message = 'Invalid Mobile Number';
+          throw getRichError('ParameterError', message, { message }, null, 'error', null);
+        }
+      },
     },
     otp: {
       type: Number,
