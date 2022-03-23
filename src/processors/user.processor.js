@@ -292,9 +292,7 @@ const verifyUserAndGenerateOTP = (mobile) => {
         }
         return model.setOTP(mobile, otp, otpExpiry);
       }
-      return model.createUserAccount({
-        mobile, otp, otpExpiry,
-      });
+      throw getRichError('ParameterError', 'Mobile number is not registered', { message: 'Mobile number is not registered' }, null, 'error', null);
     })
     .then(() => utils.connect(sendOTP, 'POST', { to: [mobile], content: otpTemplate(otp, config.jwt.otpExpiryTimeInMinutes) }))
     .then(() => ({ mobile, otp }));
