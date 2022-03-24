@@ -17,7 +17,10 @@ const {
  */
 const verifyEmail = (email, excludeUserId) => model.isEmailTaken(email, excludeUserId)
   .then((user) => {
-    if (user) throw getRichError('Parameter', 'Email already exists', { email: user.email, message: 'Account with same Email already exists' }, null, 'error', null);
+    if (user) {
+      const message = 'Account with same Email already exists';
+      throw getRichError('Parameter', 'Validation', { email: user.email, message }, message, 'error', null);
+    }
     return user;
   });
 
@@ -64,7 +67,7 @@ const createUser = (body) => {
     .then((userSearched) => {
       if (userSearched) {
         const errorMessage = 'Account with same mobile number already exists';
-        throw getRichError('ParameterError', errorMessage, { mobile: body.mobile, message: errorMessage }, null, 'error', null);
+        throw getRichError('ParameterError', errorMessage, { mobile: body.mobile, message: errorMessage }, errorMessage, 'error', null);
       }
       return userSearched;
     })
