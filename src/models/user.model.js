@@ -20,7 +20,6 @@ const userSchema = mongoose.Schema(
     },
     email: {
       type: String,
-      trim: true,
       lowercase: true,
       validate(value) {
         const e = String(value)
@@ -54,27 +53,19 @@ const userSchema = mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    isBucketCreated: {
-      type: Boolean,
-      default: false,
-    },
     mobile: {
       type: String,
       required: true,
       unique: true,
       trim: true,
       validate(value) {
-        if (!value.match(/^[1-9]{1}[0-9]{9}$/)) {
-          const message = 'Invalid Mobile Number';
-          throw getRichError('ParameterError', message, { message }, null, 'error', null);
+        if (!value.match(/\d/) || !value.match(/^(?:(?:\+|0{0,2})91(\s*|[\-])?|[0]?)?([6789]\d{2}([ -]?)\d{3}([ -]?)\d{4})$/)) {
+          throw Error({ statuCode: 400, message: 'Enter valid mobile number' });
         }
       },
     },
     otp: {
       type: Number,
-    },
-    otpExpiry: {
-      type: String,
     },
     avatar: {
       type: String,
@@ -127,6 +118,27 @@ userSchema.methods.isPasswordMatch = function (password) {
     });
 };
 
+/**
+ * verify mobile number, if mobile exists return the user object otherwise throw error
+ * @param {Number} mobile - Mobile number of registreed user
+ * @returns {Promise<boolean>}
+ */
+userSchema.statics.verifyMobile = function (mobile) {
+  return this.findOne({ mobile });
+};
+
+userSchema.statics.setOTP = function (mobile, otp) {
+  return this.findOneAndUpdate({ mobile }, { $set: { otp } });
+};
+
+userSchema.statics.createuserAndSendOTP = function (mobile, otp) {
+  return this.create({ mobile, otp, isVerified: false });
+};
+
+
+userSchema.statics.getUserByMobile = function (mobile, otp) {
+  return this.findOne({ mobile });
+};
 /**
  * @typedef User
  */

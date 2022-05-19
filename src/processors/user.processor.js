@@ -11,7 +11,7 @@ const {
 } = require('../constants');
 
 /**
- * Check if account exists or not with provided email address
+ * verify if the email is avalible to register
  * @param {string} email
  * @returns {Promise<User>}
  */
@@ -235,83 +235,54 @@ const search = (q) => model.searchUserAccounts(q);
  */
 const generateOTP = () => Math.floor(Math.random() * 899999 + 100000);
 
-/**
- * Verify OTP for the provided mobile number
- * @param {String} mobile mobile number to verify otp with
- * @param {String} otp Otp to verify
- * @returns Promise
- */
-const verifyOtp = (mobile, otp) => model.getUserByMobile(mobile)
-  .then((user) => {
-    if (!user) {
-      throw getRichError('Parameter', 'Mobile does not exists', { mobile, otp }, null, 'error', null);
-    }
-    if (Date.now() <= parseInt(user.otpExpiry, 10)) {
-      if (user.otp === parseInt(otp, 10)) {
-        return user;
-      }
-      throw getRichError('Parameter', 'Invalid otp, please try again', { mobile, otp }, null, 'error', null);
-    }
-    throw getRichError('Parameter', 'OTP is expired', { mobile, otp }, null, 'error', null);
-  });
-
-/**
- * Verify if the user is newly registered or not based on the verification
- * @param {Object} user user object from db
- * @returns Promise
- */
-const isNewRegistration = (user, fcmToken) => {
-  if (user.isBucketCreated) {
-    return model.updateProfile(user._id, {
-      isVerified: true, isBucketCreated: true, otp: '', otpExpiry: '', fcmToken,
-    })
-      .then(() => user);
-  }
-  return createUserBucket(user._id)
-    .then(() => model.updateProfile(user._id, {
-      isVerified: true, isBucketCreated: true, otp: '', otpExpiry: '', fcmToken,
-    }))
-    .then(() => {
-      delete user.isVerified;
-      return user;
-    });
-};
-
-/**
- * Generate OTP for verification
- * if the user does not exists with the provided mobile nubmer
- * new user is created otherwise OTP is set for existsing user
- * @param {String} mobile Mobile number to verify and generate otp
- * @returns Promise
- */
-const verifyUserAndGenerateOTP = (mobile) => {
-  const otp = generateOTP();
-  const otpExpiry = Date.now() + config.jwt.otpExpiryTimeInMinutes * 60000;
-  return model.verifyMobile(mobile)
+const verifyUserAndGenerateOTP = (mobile) => new Promise((resolve, reject) => {
+  const newOTP = generateOTP();
+  model.verifyMobile(mobile)
     .then((user) => {
       if (user) {
-        if (user.isBlocked) {
-          throw getRichError('ParameterError', 'Your account is blocked, please contact support', { blocked: user.isBlocked }, null, 'error', null);
-        }
-        return model.setOTP(mobile, otp, otpExpiry);
+        return model.setOTP(mobile, newOTP);
       }
-      return model.createUserAccount({
-        mobile, otp, otpExpiry,
-      });
+      return model.createuserAndSendOTP(mobile, newOTP);
     })
-    .then(() => utils.connect(sendOTP, 'POST', { to: [mobile], content: otpTemplate(otp, config.jwt.otpExpiryTimeInMinutes) }))
-    .then(() => ({ mobile, otp }));
-};
+    .then(() => resolve({ mobile, otp: newOTP }))
+    .catch((e) => {
+      reject(e);
+    });
+});
 
-/**
- * Verify OTP and user account
- * @param {String} mobile mobile number to be verified
- * @param {String} otp OTP to verify with the mobile number
- * @returns Promise
- */
-const verifyOTPAndUserAccount = (mobile, otp, fcmToken) => verifyOtp(mobile, otp)
-  .then((user) => isNewRegistration(user, fcmToken))
-  .then((user) => generateAndSaveAuthToken(user.toObject()));
+const verifyMobile = (mobile) => new Promise((resolve, reject) => {
+  model.verifyMobile(mobile)
+    .then((user) => {
+      if (!user) reject(new Error('mobile does not exists'));
+      resolve(mobile);
+    })
+    .catch((e) => reject(e));
+});
+
+const verifyOtp = (mobile, otp) => new Promise((resolve, reject) => {
+  model.getUserByMobile(mobile)
+    .then((user) => {
+      if (user.otp === parseInt(otp, 10)) {
+        resolve(user);
+      }
+      reject(new Error({ message: 'Invalid OTP!!', statusCode: 400 }));
+    })
+    .catch((e) => reject(e));
+});
+
+const isNewRegistration = (user) => new Promise((resolve, reject) => {
+  if (user.isVerified) {
+    resolve(user);
+  }
+  model.updateProfile(user._id, { isVerified: true })
+    .then(() => createUserBucket(user._id))
+    .then(() => updateProfile(user._id, { isVerified: true }))
+    .then(() => {
+      delete user.isVerified;
+      resolve(user);
+    })
+    .catch((err) => reject(err));
+});
 
 module.exports = {
   authenticate,
@@ -324,7 +295,7 @@ module.exports = {
   search,
   createUserBucket,
   verifyUserAndGenerateOTP,
+  verifyMobile,
   verifyOtp,
-  verifyOTPAndUserAccount,
   isNewRegistration,
 };

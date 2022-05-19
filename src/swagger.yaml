@@ -39,14 +39,14 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
-  
+
   /admin/users:
     x-swagger-router-controller: admin.controller
     get:
       x-security-scopes: admin
       security:
         - jwt: []
-      
+
       description: Returns the systems cpu information
       operationId: usersList
       tags:
@@ -60,7 +60,7 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
-  
+
   /admin/user/{userId}:
     x-swagger-router-controller: admin.controller
     patch:
@@ -78,7 +78,7 @@ paths:
           description: User creation body object
           schema:
             type: object
-       
+
       description: Returns the systems cpu information
       operationId: updateUser
       tags:
@@ -179,6 +179,92 @@ paths:
               mobile:
                 type: string
               password:
+                type: string
+      responses:
+        "200":
+          description: Success
+          schema:
+            properties:
+              _id:
+                type: string
+                description: "Mongo Object Id ( user id )"
+              firstName:
+                description: "Registered users first name"
+                type: string
+              lastName:
+                description: "Registered user last name"
+                type: string
+              email:
+                type: string
+                description: "Registered users email address"
+              password:
+                type: string
+                description: "Hash of password provided during the registration"
+        "400":
+          description: Bad Request entry, in case validation failed or missing of required parameters
+          schema:
+            properties:
+              statusCode:
+                type: integer
+                description: "statusCode for response to the request"
+              title:
+                type: string
+                description: "HTTP status code title for the response"
+              message:
+                type: string
+                description: "Short message about the error or missing information in request"
+              info:
+                type: object
+                description: "Error object"
+        "500":
+          description: Internal server error
+          schema:
+            properties:
+              statusCode:
+                type: integer
+                description: "statusCode for response to the request"
+              title:
+                type: string
+                description: "HTTP status code title for the response"
+              message:
+                type: string
+                description: "Short message about the error or missing information in request"
+        default:
+          description: Error
+          schema:
+            properties:
+              statusCode:
+                type: integer
+                description: "statusCode for response to the request"
+              title:
+                type: string
+                description: "HTTP status code title for the response"
+              message:
+                type: string
+                description: "Short message about the error or missing information in request"
+
+  /user/register:
+    x-swagger-router-controller: user.controller
+    post:
+      tags:
+        - "user"
+      summary: Create a new user account
+      description: Create a new user account
+      operationId: register
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: User body object
+          description: User creation body object
+          schema:
+            type: object
+            required:
+              - mobile
+            properties:
+              mobile:
                 type: string
       responses:
         "200":
@@ -448,8 +534,6 @@ paths:
               mobile:
                 type: string
               otp:
-                type: string
-              fcmToken:
                 type: string
       responses:
         "200":
