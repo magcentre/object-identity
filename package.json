@@ -8,15 +8,15 @@
   },
   "dependencies": {
     "@magcentre/api-utils": "^1.0.9",
-    "@magcentre/init": "^1.0.1",
+    "@magcentre/init": "^1.0.2",
     "@magcentre/logger-helper": "^1.0.1",
-    "@magcentre/mongoose-helper": "^1.0.0",
-    "@magcentre/response-helper": "^1.0.1",
+    "@magcentre/mongoose-helper": "^1.0.1",
+    "@magcentre/response-helper": "^1.0.3",
     "bcryptjs": "^2.4.3",
     "express": "^4.12.3",
     "jsonwebtoken": "^8.5.1",
     "moment": "^2.29.1",
-    "systeminformation": "^5.9.8"
+    "systeminformation": "^5.11.16"
   },
   "devDependencies": {
     "chai": "^4.3.6",

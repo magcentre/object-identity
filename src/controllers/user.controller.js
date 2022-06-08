@@ -91,25 +91,6 @@ const verifyOtp = (req, res) => {
     });
 };
 
-const sendOTP = (req, res) => {
-  processor.verifyUserAndGenerateOTP(req.body.mobile)
-    .then((e) => sendResult(e, 200, res, req))
-    .catch((e) => {
-      logger.error(e.message);
-      sendError(e.message, res, e.statusCode || 500, req);
-    });
-};
-
-const verifyOtp = (req, res) => {
-  processor.verifyOtp(req.body.mobile, req.body.otp)
-    .then((user) => processor.isNewRegistration(user))
-    .then((user) => processor.generateAndSaveAuthToken(user.toObject()))
-    .then((e) => sendResult(e, 200, res, req))
-    .catch((e) => {
-      logger.error(e.message);
-      sendError(e.message, res, e.statusCode || 500, req);
-    });
-};
 
 module.exports = {
   create,

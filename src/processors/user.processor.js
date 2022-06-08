@@ -270,6 +270,9 @@ const verifyOtp = (mobile, otp) => new Promise((resolve, reject) => {
     .catch((e) => reject(e));
 });
 
+
+
+
 const isNewRegistration = (user) => new Promise((resolve, reject) => {
   if (user.isVerified) {
     resolve(user);
@@ -283,6 +286,17 @@ const isNewRegistration = (user) => new Promise((resolve, reject) => {
     })
     .catch((err) => reject(err));
 });
+
+/**
+ * Verify OTP and user account
+ * @param {String} mobile mobile number to be verified
+ * @param {String} otp OTP to verify with the mobile number
+ * @returns Promise
+ */
+const verifyOTPAndUserAccount = (mobile, otp) => verifyOtp(mobile, otp)
+  .then((user) => isNewRegistration(user))
+  .then((user) => generateAndSaveAuthToken(user.toObject()))
+  .catch((user) => getRichError('System', 'error while verifying user otp', { user }, null, 'error', null));
 
 module.exports = {
   authenticate,
@@ -298,4 +312,5 @@ module.exports = {
   verifyMobile,
   verifyOtp,
   isNewRegistration,
+  verifyOTPAndUserAccount,
 };
