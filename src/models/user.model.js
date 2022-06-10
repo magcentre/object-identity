@@ -85,7 +85,7 @@ const userSchema = mongoose.Schema(
   },
 );
 
-userSchema.pre('save', function (next) {
+userSchema.pre('save', (next) => {
   const user = this;
   if (user.password) {
     if (user.isModified('password')) {
@@ -109,7 +109,7 @@ userSchema.pre('save', function (next) {
  * @param {string} password
  * @returns {Promise<Object>}
  */
-userSchema.methods.isPasswordMatch = function (password) {
+userSchema.methods.isPasswordMatch = (password) => {
   const user = this;
   return bcrypt.compare(password, user.password)
     .then((isValid) => ({ match: isValid, ...user.toObject() }))
@@ -123,34 +123,24 @@ userSchema.methods.isPasswordMatch = function (password) {
  * @param {Number} mobile - Mobile number of registreed user
  * @returns {Promise<boolean>}
  */
-userSchema.statics.verifyMobile = function (mobile) {
-  return this.findOne({ mobile });
-};
+// userSchema.statics.verifyMobile = (mobile) => this.findOne({ mobile });
 
-userSchema.statics.setOTP = function (mobile, otp) {
-  return this.findOneAndUpdate({ mobile }, { $set: { otp } });
-};
+// userSchema.statics.setOTP = (mobile, otp) => this.findOneAndUpdate({ mobile }, { $set: { otp } });
 
-userSchema.statics.createuserAndSendOTP = function (mobile, otp) {
-  return this.create({ mobile, otp, isVerified: false });
-};
-
-
-userSchema.statics.getUserByMobile = function (mobile, otp) {
-  return this.findOne({ mobile });
-};
+// userSchema.statics.getUserByMobile = (mobile, otp) => this.findOne({ mobile });
 /**
  * @typedef User
  */
-const UserAccount = mongoose.model('Users', userSchema);
+const User = mongoose.model('Users', userSchema);
 
+User.createuserAndSendOTP = (mobile, otp) => User.create({ mobile, otp, isVerified: false });
 /**
  * Check if email is taken
  * @param {string} email - The user's email
  * @param {ObjectId} [excludeUserId] - The id of the user to be excluded
  * @returns {Promise<boolean>}
  */
-UserAccount.isEmailTaken = (email, excludeUserId) => UserAccount.findOne({ email, _id: { $ne: excludeUserId } })
+User.isEmailTaken = (email, excludeUserId) => User.findOne({ email, _id: { $ne: excludeUserId } })
   .catch((err) => {
     throw getRichError('System', 'error while finding the email address', { email }, err, 'error', null);
   });
@@ -161,19 +151,19 @@ UserAccount.isEmailTaken = (email, excludeUserId) => UserAccount.findOne({ email
  * @param {Object}  params - The json config of the update values
  * @returns {Promise<User>}
  */
-UserAccount.updateProfile = (id, params) => {
+User.updateProfile = (id, params) => {
   if (params.password) {
     return bcrypt.hash(params.password, 8)
       .then((hash) => {
         params.password = hash;
         return params;
       })
-      .then(() => UserAccount.findByIdAndUpdate(id, { $set: params }))
+      .then(() => User.findByIdAndUpdate(id, { $set: params }))
       .catch((err) => {
         throw getRichError('System', 'error while generating the password hasg', { err }, err, 'error', null);
       });
   }
-  return UserAccount.findByIdAndUpdate(id, { $set: params })
+  return User.findByIdAndUpdate(id, { $set: params })
     .catch((err) => {
       throw getRichError('System', 'error while finding and updateing the profile with mongo id', { id, params }, err, 'error', null);
     });
@@ -185,7 +175,7 @@ UserAccount.updateProfile = (id, params) => {
  * @param {Object}  params - The json config of the update values
  * @returns {Promise<User>}
  */
-UserAccount.getUserByEmail = (email) => UserAccount.findOne({ email })
+User.getUserByEmail = (email) => User.findOne({ email })
   .catch((err) => {
     throw getRichError('System', 'error while finding and updateing the profile with mongo id', { err }, err, 'error', null);
   });
@@ -195,7 +185,7 @@ UserAccount.getUserByEmail = (email) => UserAccount.findOne({ email })
  * @param {Object}  body - user information
  * @returns {Promise<User>}
  */
-UserAccount.createUserAccount = (body) => UserAccount.create(body)
+User.createUser = (body) => User.create(body)
   .catch((err) => {
     throw getRichError('System', 'error while creating new user account', { err }, err, 'error', null);
   });
@@ -205,7 +195,7 @@ UserAccount.createUserAccount = (body) => UserAccount.create(body)
  * @param {String}  id - user information
  * @returns {Promise<User>}
  */
-UserAccount.getUserById = (id) => UserAccount.findById(id, { password: 0 })
+User.getUserById = (id) => User.findById(id, { password: 0 })
   .catch((err) => {
     throw getRichError('System', 'error while fetching user with id', { err, id }, err, 'error', null);
   });
@@ -216,7 +206,7 @@ UserAccount.getUserById = (id) => UserAccount.findById(id, { password: 0 })
  * @param {Object}  display - objects to be displayed
  * @returns {Promise<User>}
  */
-UserAccount.findUserAccounts = (ids, display) => UserAccount.find({ _id: { $in: ids } }, display)
+User.findUsers = (ids, display) => User.find({ _id: { $in: ids } }, display)
   .catch((err) => {
     throw getRichError('System', 'error while finding users with id', { err, ids, display }, err, 'error', null);
   });
@@ -226,7 +216,7 @@ UserAccount.findUserAccounts = (ids, display) => UserAccount.find({ _id: { $in: 
  * @param {String}  q - objects to be displayed
  * @returns {Promise<User>}
  */
-UserAccount.searchUserAccounts = (q) => UserAccount.find({ $or: [{ firstName: { $regex: q } }, { lastName: { $regex: q } }] }, { firstName: 1, lastName: 1, email: 1 })
+User.searchUsers = (q) => User.find({ $or: [{ firstName: { $regex: q } }, { lastName: { $regex: q } }] }, { firstName: 1, lastName: 1, email: 1 })
   .catch((err) => {
     throw getRichError('System', 'error while searching users with query', { err, q }, err, 'error', null);
   });
@@ -236,7 +226,7 @@ UserAccount.searchUserAccounts = (q) => UserAccount.find({ $or: [{ firstName: { 
  * @param {Number} mobile - Mobile number of registreed user
  * @returns {Promise<boolean>}
 */
-UserAccount.verifyMobile = (mobile) => UserAccount.findOne({ mobile })
+User.verifyMobile = (mobile) => User.findOne({ mobile })
   .catch((err) => {
     throw getRichError('System', 'error while finding user with mobile', { err, mobile }, err, 'error', null);
   });
@@ -246,7 +236,7 @@ UserAccount.verifyMobile = (mobile) => UserAccount.findOne({ mobile })
  * @param {String} otp OTP to set for the user
  * @returns Promise
  */
-UserAccount.setOTP = (mobile, otp, expiry) => UserAccount.findOneAndUpdate({ mobile }, { $set: { otp, otpExpiry: expiry } })
+User.setOTP = (mobile, otp, expiry) => User.findOneAndUpdate({ mobile }, { $set: { otp, otpExpiry: expiry } })
   .catch((err) => {
     throw getRichError('System', 'error while finding user with mobile', { err, mobile }, err, 'error', null);
   });
@@ -256,7 +246,7 @@ UserAccount.setOTP = (mobile, otp, expiry) => UserAccount.findOneAndUpdate({ mob
  * @param {String} mobile search user by mobile number
  * @returns Promise
  */
-UserAccount.getUserByMobile = (mobile) => UserAccount.findOne({ mobile })
+User.getUserByMobile = (mobile) => User.findOne({ mobile })
   .catch((err) => {
     throw getRichError('System', 'error while finding user with mobile', { err, mobile }, err, 'error', null);
   });
@@ -266,7 +256,7 @@ UserAccount.getUserByMobile = (mobile) => UserAccount.findOne({ mobile })
  * @param {String} mobile search user by mobile number
  * @returns Promise
  */
-UserAccount.getUsersList = () => UserAccount.find({}, { otp: 0, otpExpiry: 0, password: 0 })
+User.getUsersList = () => User.find({}, { otp: 0, otpExpiry: 0, password: 0 })
   .catch((err) => {
     throw getRichError('System', 'error while fetching all users list user with mobile', {}, err, 'error', null);
   });
@@ -276,12 +266,12 @@ UserAccount.getUsersList = () => UserAccount.find({}, { otp: 0, otpExpiry: 0, pa
 * @param {String} mobile search user by mobile number
 * @returns Promise
 */
-UserAccount.updateUserById = (userId, properties) => UserAccount.findByIdAndUpdate(userId, properties)
+User.updateUserById = (userId, properties) => User.findByIdAndUpdate(userId, properties)
   .catch((err) => {
     throw getRichError('System', 'error while updating the user details', { userId, properties }, err, 'error', null);
   });
 
 module.exports = {
-  model: UserAccount,
+  UserModel: User,
   types: userTypes,
 };

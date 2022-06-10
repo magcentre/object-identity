@@ -68,6 +68,6 @@ Token.findToken = (tokenConfig) => Token.findOne(tokenConfig)
   });
 
 module.exports = {
-  model: Token,
-  types: tokenTypes,
+  TokenModel: Token,
+  tokenTypes,
 };
