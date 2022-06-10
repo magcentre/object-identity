@@ -3,8 +3,8 @@ const jwt = require('jsonwebtoken');
 const utils = require('@magcentre/api-utils');
 const { getRichError } = require('@magcentre/response-helper');
 const logger = require('@magcentre/logger-helper');
-const { model } = require('../models/user.model');
-const token = require('../models/token.model');
+const { UserModel } = require('../models/user.model');
+const { TokenModel, tokenTypes } = require('../models/token.model');
 const config = require('../configuration/config');
 const {
   bucketExists, createBucket, sendOTP, otpTemplate,
@@ -15,7 +15,7 @@ const {
  * @param {string} email
  * @returns {Promise<User>}
  */
-const verifyEmail = (email, excludeUserId) => model.isEmailTaken(email, excludeUserId)
+const verifyEmail = (email, excludeUserId) => UserModel.isEmailTaken(email, excludeUserId)
   .then((user) => {
     if (user) {
       const message = 'Account with same Email already exists';
@@ -63,7 +63,7 @@ const createUserBucket = (bucketName) => utils.connect(createBucket, 'POST', { b
 const createUser = (body) => {
   let user = {};
   return verifyEmail(body.email)
-    .then(() => model.verifyMobile(body.mobile))
+    .then(() => UserModel.verifyMobile(body.mobile))
     .then((userSearched) => {
       if (userSearched) {
         const errorMessage = 'Account with same mobile number already exists';
@@ -71,7 +71,7 @@ const createUser = (body) => {
       }
       return userSearched;
     })
-    .then(() => model.createUserAccount(body))
+    .then(() => UserModel.createUser(body))
     .then((newUser) => {
       user = newUser.toObject();
       logger.info('User account created', {
@@ -86,7 +86,7 @@ const createUser = (body) => {
  * @param {ObjectId} id
  * @returns {Promise<User>}
  */
-const getUserById = (id) => model.getUserById(id);
+const getUserById = (id) => UserModel.getUserById(id);
 
 /**
  * Generate auth tokens
@@ -104,20 +104,20 @@ const generateAndSaveAuthToken = (user) => {
   const accessTokenExpires = moment().add(config.jwt.accessExpirationMinutes, 'minutes');
 
   // generate access token
-  const accessToken = generateToken(user._id, user.role, accessTokenExpires, token.types.ACCESS);
+  const accessToken = generateToken(user._id, user.role, accessTokenExpires, tokenTypes.ACCESS);
 
   // generate refresh token expiry
   const refreshTokenExpires = moment().add(config.jwt.refreshExpirationDays, 'days');
 
   // generate refresh token
-  const refreshToken = generateToken(user._id, user.role, refreshTokenExpires, token.types.REFRESH);
+  const refreshToken = generateToken(user._id, user.role, refreshTokenExpires, tokenTypes.REFRESH);
 
   // return promise and store token in database
-  return token.model.createToken({
+  return TokenModel.createToken({
     token: refreshToken,
     user: user._id,
     expires: refreshTokenExpires.toDate(),
-    type: token.types.REFRESH,
+    type: tokenTypes.REFRESH,
     blacklisted: false,
   })
     .then((newToken) => ({
@@ -156,7 +156,7 @@ const verifyBucket = (userId, user) => utils.connect(bucketExists, 'POST', { buc
  * @returns User
  */
 
-const authenticate = (email, password, fcmToken) => model.getUserByEmail(email)
+const authenticate = (email, password, fcmToken) => UserModel.getUserByEmail(email)
   .then((user) => {
     if (!user) throw getRichError('ParameterError', 'Invalid email', { email }, null, 'error', null);
     return user;
@@ -173,7 +173,7 @@ const authenticate = (email, password, fcmToken) => model.getUserByEmail(email)
     return userWithPassword;
   })
   .then((user) => verifyBucket(user._id, user))
-  .then((user) => model.updateProfile(user._id, { fcmToken }))
+  .then((user) => UserModel.updateProfile(user._id, { fcmToken }))
   .then((user) => generateAndSaveAuthToken(user.toObject()));
 
 /**
@@ -188,8 +188,8 @@ const getAccessToken = (refreshToken) => utils.verifyJWTToken(refreshToken, conf
   .catch((err) => {
     throw getRichError('UnAuthorized', 'Failed to verify refresh token', { err }, null, 'error', null);
   })
-  .then((decoded) => token.model.findToken({
-    token: refreshToken, type: token.types.REFRESH, user: decoded.sub, blacklisted: false,
+  .then((decoded) => TokenModel.findToken({
+    token: refreshToken, type: tokenTypes.REFRESH, user: decoded.sub, blacklisted: false,
   }))
   .then((oldToken) => {
     if (!oldToken) throw getRichError('UnAuthorized', 'Not a valid refresh token', { oldToken }, null, 'error', null);
@@ -210,7 +210,7 @@ const getAccessToken = (refreshToken) => utils.verifyJWTToken(refreshToken, conf
  * @returns {Promise<Token>}
  */
 const updateProfile = (email, id, param) => verifyEmail(email, [id])
-  .then(() => model.updateProfile(id, param))
+  .then(() => UserModel.updateProfile(id, param))
   .then(() => getUserById(id));
 
 /**
@@ -219,7 +219,7 @@ const updateProfile = (email, id, param) => verifyEmail(email, [id])
  * * @param {List<String>} display display parameters
  * @returns {Promise<List<User>>}
  */
-const id2object = (ids, display) => model.findUserAccounts(ids, display);
+const id2object = (ids, display) => UserModel.findUser(ids, display);
 
 /**
  * Convert list of userIds into objects
@@ -227,7 +227,7 @@ const id2object = (ids, display) => model.findUserAccounts(ids, display);
  * * @param {List<String>} display display parameters
  * @returns {Promise<List<User>>}
  */
-const search = (q) => model.searchUserAccounts(q);
+const search = (q) => UserModel.searchUsers(q);
 
 /**
  * Generate random 6 digit otp
@@ -237,12 +237,12 @@ const generateOTP = () => Math.floor(Math.random() * 899999 + 100000);
 
 const verifyUserAndGenerateOTP = (mobile) => new Promise((resolve, reject) => {
   const newOTP = generateOTP();
-  model.verifyMobile(mobile)
+  UserModel.verifyMobile(mobile)
     .then((user) => {
       if (user) {
-        return model.setOTP(mobile, newOTP);
+        return UserModel.setOTP(mobile, newOTP);
       }
-      return model.createuserAndSendOTP(mobile, newOTP);
+      return UserModel.createuserAndSendOTP(mobile, newOTP);
     })
     .then(() => resolve({ mobile, otp: newOTP }))
     .catch((e) => {
@@ -251,7 +251,7 @@ const verifyUserAndGenerateOTP = (mobile) => new Promise((resolve, reject) => {
 });
 
 const verifyMobile = (mobile) => new Promise((resolve, reject) => {
-  model.verifyMobile(mobile)
+  UserModel.verifyMobile(mobile)
     .then((user) => {
       if (!user) reject(new Error('mobile does not exists'));
       resolve(mobile);
@@ -260,7 +260,7 @@ const verifyMobile = (mobile) => new Promise((resolve, reject) => {
 });
 
 const verifyOtp = (mobile, otp) => new Promise((resolve, reject) => {
-  model.getUserByMobile(mobile)
+  UserModel.getUserByMobile(mobile)
     .then((user) => {
       if (user.otp === parseInt(otp, 10)) {
         resolve(user);
@@ -270,14 +270,11 @@ const verifyOtp = (mobile, otp) => new Promise((resolve, reject) => {
     .catch((e) => reject(e));
 });
 
-
-
-
 const isNewRegistration = (user) => new Promise((resolve, reject) => {
   if (user.isVerified) {
     resolve(user);
   }
-  model.updateProfile(user._id, { isVerified: true })
+  UserModel.updateProfile(user._id, { isVerified: true })
     .then(() => createUserBucket(user._id))
     .then(() => updateProfile(user._id, { isVerified: true }))
     .then(() => {
@@ -293,7 +290,7 @@ const isNewRegistration = (user) => new Promise((resolve, reject) => {
  * @param {String} otp OTP to verify with the mobile number
  * @returns Promise
  */
-const verifyOTPAndUserAccount = (mobile, otp) => verifyOtp(mobile, otp)
+const verifyOTPAndUser = (mobile, otp) => verifyOtp(mobile, otp)
   .then((user) => isNewRegistration(user))
   .then((user) => generateAndSaveAuthToken(user.toObject()))
   .catch((user) => getRichError('System', 'error while verifying user otp', { user }, null, 'error', null));
@@ -312,5 +309,5 @@ module.exports = {
   verifyMobile,
   verifyOtp,
   isNewRegistration,
-  verifyOTPAndUserAccount,
+  verifyOTPAndUser,
 };
