@@ -2,27 +2,27 @@ const moment = require('moment');
 const jwt = require('jsonwebtoken');
 const utils = require('@magcentre/api-utils');
 const { getRichError } = require('@magcentre/response-helper');
-const logger = require('@magcentre/logger-helper');
 const { UserModel } = require('../models/user.model');
 const { TokenModel, tokenTypes } = require('../models/token.model');
 const config = require('../configuration/config');
 const {
-  bucketExists, createBucket, sendOTP, otpTemplate,
+  bucketExists, createBucket,
 } = require('../constants');
+const { SubscriptionModel } = require('../models/subscription.model');
 
 /**
  * verify if the email is avalible to register
  * @param {string} email
  * @returns {Promise<User>}
  */
-const verifyEmail = (email, excludeUserId) => UserModel.isEmailTaken(email, excludeUserId)
-  .then((user) => {
-    if (user) {
-      const message = 'Account with same Email already exists';
-      throw getRichError('Parameter', 'Validation', { email: user.email, message }, message, 'error', null);
-    }
-    return user;
-  });
+// const verifyEmail = (email, excludeUserId) => UserModel.isEmailTaken(email, excludeUserId)
+//   .then((user) => {
+//     if (user) {
+//       const message = 'Account with same Email already exists';
+//       throw getRichError('Parameter', 'Validation', { email: user.email, message }, message, 'error', null);
+//     }
+//     return user;
+//   });
 
 /**
  * Generate token
@@ -60,26 +60,26 @@ const createUserBucket = (bucketName) => utils.connect(createBucket, 'POST', { b
  * @param {Object} userBody
  * @returns {Promise<User>}
  */
-const createUser = (body) => {
-  let user = {};
-  return verifyEmail(body.email)
-    .then(() => UserModel.verifyMobile(body.mobile))
-    .then((userSearched) => {
-      if (userSearched) {
-        const errorMessage = 'Account with same mobile number already exists';
-        throw getRichError('ParameterError', errorMessage, { mobile: body.mobile, message: errorMessage }, errorMessage, 'error', null);
-      }
-      return userSearched;
-    })
-    .then(() => UserModel.createUser(body))
-    .then((newUser) => {
-      user = newUser.toObject();
-      logger.info('User account created', {
-        user,
-      });
-      return user;
-    });
-};
+// const createUser = (body) => {
+//   let user = {};
+//   return verifyEmail(body.email)
+//     .then(() => UserModel.verifyMobile(body.mobile))
+//     .then((userSearched) => {
+//       if (userSearched) {
+//         const errorMessage = 'Account with same mobile number already exists';
+//         throw getRichError('ParameterError', errorMessage, { mobile: body.mobile, message: errorMessage }, errorMessage, 'error', null);
+//       }
+//       return userSearched;
+//     })
+//     .then(() => UserModel.createUser(body))
+//     .then((newUser) => {
+//       user = newUser.toObject();
+//       logger.info('User account created', {
+//         user,
+//       });
+//       return user;
+//     });
+// };
 
 /**
  * Get user by id
@@ -274,11 +274,9 @@ const isNewRegistration = (user) => new Promise((resolve, reject) => {
   if (user.isVerified) {
     resolve(user);
   }
-  UserModel.updateProfile(user._id, { isVerified: true })
-    .then(() => createUserBucket(user._id))
-    .then(() => updateProfile(user._id, { isVerified: true }))
+  createUserBucket(user._id)
+    .then(() => UserModel.updateProfile(user._id, { isVerified: true }))
     .then(() => {
-      delete user.isVerified;
       resolve(user);
     })
     .catch((err) => reject(err));
@@ -293,12 +291,26 @@ const isNewRegistration = (user) => new Promise((resolve, reject) => {
 const verifyOTPAndUser = (mobile, otp) => verifyOtp(mobile, otp)
   .then((user) => isNewRegistration(user))
   .then((user) => generateAndSaveAuthToken(user.toObject()))
-  .catch((user) => getRichError('System', 'error while verifying user otp', { user }, null, 'error', null));
+  .catch((user) => {
+    throw getRichError('System', 'error while verifying user otp', { user }, null, 'error', null);
+  });
+
+/**
+ * Subscribe user to a plan
+ * @param {String} userId mobile number to be verified
+ * @param {String} subscriptionId OTP to verify with the mobile number
+ * @returns Promise
+ */
+const subscribeUser = (userId, subscriptionId) => SubscriptionModel.validSubscription(subscriptionId)
+  .then((subscription) => UserModel.createSubscription(userId, subscription))
+  .catch((user) => {
+    throw getRichError('System', 'error while subscribing user', { user }, null, 'error', null);
+  });
 
 module.exports = {
   authenticate,
-  verifyEmail,
-  createUser,
+  // verifyEmail,
+  // createUser,
   getUserById,
   getAccessToken,
   updateProfile,
@@ -310,4 +322,5 @@ module.exports = {
   verifyOtp,
   isNewRegistration,
   verifyOTPAndUser,
+  subscribeUser,
 };

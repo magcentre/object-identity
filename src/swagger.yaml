@@ -4,7 +4,7 @@ info:
   title: Identity Service
   description: The micro-service intended to provide the user role and access management
   contact:
-    email: prasanna@makonlinesolutions.com
+    email: kanishk@magcentre.com
 host: localhost:5004
 basePath: /
 securityDefinitions:
@@ -926,6 +926,78 @@ paths:
               refresh:
                 type: object
                 description: Contains token and expiry timestamp for refresh token
+        "403":
+          description: Unauthorized access, either token is not provided or expired
+          schema:
+            properties:
+              message:
+                type: string
+              code:
+                type: string
+              statusCode:
+                type: integer
+        "500":
+          description: Internal server error
+          schema:
+            properties:
+              statusCode:
+                type: integer
+                description: "statusCode for response to the request"
+              title:
+                type: string
+                description: "HTTP status code title for the response"
+              message:
+                type: string
+                description: "Short message about the error or missing information in request"
+        default:
+          description: Error
+          schema:
+            properties:
+              statusCode:
+                type: integer
+                description: statusCode for response to the request
+              title:
+                type: string
+                description: HTTP status code title for the response
+              message:
+                type: string
+                description: Short message about the error or missing information in request
+
+  /user/subscription:
+    x-swagger-router-controller: user.controller
+    post:
+      tags:
+        - "user"
+      security:
+        - jwt: []
+      summary: Subscribe user to a plan
+      description: Subscribe user to a plan
+      operationId: subscribeUser
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: Update user subscription
+          description: Update user subscription
+          schema:
+            type: object
+            required:
+              - userId
+              - subscriptionId
+            properties:
+              userId:
+                type: string
+              subscriptionId:
+                type: string
+
+      responses:
+        "200":
+          description: Load logged in users profile
+          schema:
+            properties:
+              subscribe:
+                type: string
+                description: Contains if user had subscribed
         "403":
           description: Unauthorized access, either token is not provided or expired
           schema:

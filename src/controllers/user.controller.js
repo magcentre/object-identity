@@ -4,15 +4,15 @@ const logger = require('@magcentre/logger-helper');
 
 const processor = require('../processors/user.processor');
 
-const create = (req, res) => {
-  const userBody = req.body;
-  processor.createUser(userBody, req.headers)
-    .then((user) => sendResult(user, 200, res, req))
-    .catch((err) => {
-      logger.error(err);
-      sendError(err, res, err.statusCode || 500, req);
-    });
-};
+// const create = (req, res) => {
+//   const userBody = req.body;
+//   processor.createUser(userBody, req.headers)
+//     .then((user) => sendResult(user, 200, res, req))
+//     .catch((err) => {
+//       logger.error(err);
+//       sendError(err, res, err.statusCode || 500, req);
+//     });
+// };
 
 const authenticate = (req, res) => {
   const loginBody = req.body;
@@ -83,7 +83,7 @@ const sendOTP = (req, res) => {
 };
 
 const verifyOtp = (req, res) => {
-  processor.verifyOTPAndUser(req.body.mobile, req.body.otp, req.body.fcmToken)
+  processor.verifyOTPAndUser(req.body.mobile, req.body.otp)
     .then((e) => sendResult(e, 200, res, req))
     .catch((e) => {
       logger.error(e.message);
@@ -91,9 +91,17 @@ const verifyOtp = (req, res) => {
     });
 };
 
+const subscribeUser = (req, res) => {
+  processor.subscribeUser(req.body.userId, req.body.subscriptionId)
+    .then((e) => sendResult(e, 200, res, req))
+    .catch((e) => {
+      logger.error(e.message);
+      sendError(e, res, e.statusCode || 500, req);
+    });
+};
 
 module.exports = {
-  create,
+  // create,
   authenticate,
   getProfile,
   getAccessToken,
@@ -102,4 +110,5 @@ module.exports = {
   search,
   sendOTP,
   verifyOtp,
+  subscribeUser,
 };

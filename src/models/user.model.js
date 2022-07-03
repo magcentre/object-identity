@@ -59,8 +59,8 @@ const userSchema = mongoose.Schema(
       unique: true,
       trim: true,
       validate(value) {
-        if (!value.match(/\d/) || !value.match(/^(?:(?:\+|0{0,2})91(\s*|[\-])?|[0]?)?([6789]\d{2}([ -]?)\d{3}([ -]?)\d{4})$/)) {
-          throw Error({ statuCode: 400, message: 'Enter valid mobile number' });
+        if (!value.match(/\d/) || !value.match(/^(?:(?:\+|0{0,2})91(\s*|[-])?|[0]?)?([6789]\d{2}([ -]?)\d{3}([ -]?)\d{4})$/)) {
+          throw getRichError('Parameter', 'Enter valid mobile number', { value }, null, 'error', null);
         }
       },
     },
@@ -76,6 +76,14 @@ const userSchema = mongoose.Schema(
       default: false,
     },
     fcmToken: {
+      type: String,
+    },
+    subscriptions: {
+      type: mongoose.Schema.Types.Array,
+      ref: 'Subscription',
+      required: true,
+    },
+    activeSubscription: {
       type: String,
     },
   },
@@ -158,12 +166,12 @@ User.updateProfile = (id, params) => {
         params.password = hash;
         return params;
       })
-      .then(() => User.findByIdAndUpdate(id, { $set: params }))
+      .then(() => User.findByIdAndUpdate(id, { $set: params }, { new: true }))
       .catch((err) => {
         throw getRichError('System', 'error while generating the password hasg', { err }, err, 'error', null);
       });
   }
-  return User.findByIdAndUpdate(id, { $set: params })
+  return User.findByIdAndUpdate(id, { $set: params }, { new: true })
     .catch((err) => {
       throw getRichError('System', 'error while finding and updateing the profile with mongo id', { id, params }, err, 'error', null);
     });
@@ -185,10 +193,10 @@ User.getUserByEmail = (email) => User.findOne({ email })
  * @param {Object}  body - user information
  * @returns {Promise<User>}
  */
-User.createUser = (body) => User.create(body)
-  .catch((err) => {
-    throw getRichError('System', 'error while creating new user account', { err }, err, 'error', null);
-  });
+// User.createUser = (body) => User.create(body)
+//   .catch((err) => {
+//     throw getRichError('System', 'error while creating new user account', { err }, err, 'error', null);
+//   });
 
 /**
  * Get user by mongo id
@@ -269,6 +277,16 @@ User.getUsersList = () => User.find({}, { otp: 0, otpExpiry: 0, password: 0 })
 User.updateUserById = (userId, properties) => User.findByIdAndUpdate(userId, properties)
   .catch((err) => {
     throw getRichError('System', 'error while updating the user details', { userId, properties }, err, 'error', null);
+  });
+
+User.createSubscription = (userId, subscription) => User.findByIdAndUpdate(userId, {
+  $addToSet: {
+    subscriptions: subscription._id,
+  },
+  activeSubscription: subscription._id,
+}, { new: true })
+  .catch((err) => {
+    throw getRichError('System', 'error while creating subscription', { userId, subscription }, err, 'error', null);
   });
 
 module.exports = {
