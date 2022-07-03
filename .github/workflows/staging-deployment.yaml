@@ -24,7 +24,7 @@ jobs:
         with:
           host: "185.213.175.212"
           username: "prasanna"
-          password: "PrasannaM@1122"
+          password: "Up32dr9237"
           port: 22
           source: "*"
           target: "/home/prasanna/deplyement/object-identity/"
@@ -34,7 +34,7 @@ jobs:
         with:
           host: "185.213.175.212"
           username: "prasanna"
-          password: "PrasannaM@1122"
+          password: "Up32dr9237"
           port: 22
           script: |
             cd /home/prasanna/deplyement/object-identity
